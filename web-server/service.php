@@ -1,20 +1,41 @@
 <?php
-	header( 'Content-type:text/html;charset=utf-8' );
+	header( "Content-type:text/html;charset=utf-8" );
 	
-	require_once( 'config.php' );
-	require_once( 'api.php' );
-	
+	require_once( "config.php" );
+	require_once( "api.php" );
 	$api = new cardApi( $config );
-	$str = file_get_contents( 'php://input' );
+	
+	$str = file_get_contents( "php://input" );
 	$str = str_replace( "\\\"", "'", $str );
 	$post = json_decode( $str, true );
-	
 	$api->interface_valid( $post );
+	$action = $post['action'];	
 	
-	$action = $post['action'];
+	$post["token"] = str_replace( " ", "+", $post["token"] );
+/*	
+	//authcode 的 加密 在 login方法里面，验证了一卡通的账号有效性后实现
+	$authcode = $api->authcode( $post["token"], 'HX_DECODE', $config['hx_auth_key'] );
 	
-	if( $post['stu_no']=='201520152015' )
-		error_log( $str."\r\n", 3, 'wdh.txt' );
+	//token的组合规则 stu_no|>|password|>|token
+	$auth = explode( "|>|", $authcode );
+	$stu_no = $auth[0];
+	$password = $auth[1];
+	$token = $auth[2];
+	
+	//防止非法篡改学号和token
+	if( $action!="login" ) {
+		if($stu_no != $post["sut_no"]) {
+			echo '{
+				"resp_desc" : "非法操作,登录的学号和操作时的学号不匹配",
+				"resp_code" : "1666",
+				"data"      : "{}"
+				}';exit;
+		}
+		$post["sut_no"] = $stu_no;
+		$post["password"] = $password;
+		$post["token"] = $token;
+	}
+*/
 		
 	//防止非法篡改学号和token
 	if( $action!='login' ) {
@@ -59,9 +80,8 @@
 		}
 */
 	}
-		
+
 	switch( $action ) {
-		
 		case 'login':
 			$student_no = $post['stu_no'];
 			$student_password = $post['password'];
@@ -218,6 +238,4 @@
 			$api->trade($student_no, $token, $password, $trade_branch_id,  $trade_money);
 			break;
 	}
-	
-	$api->db->close();
 ?>

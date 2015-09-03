@@ -5,7 +5,7 @@
 	$config['dbhost'] = 'localhost'; 
 	
 	$config['dbuser'] = 'root';
-	$config['dbpwd'] = 'blue';
+	$config['dbpwd'] = 'scgkapp';
 	
 	//$config['dbuser'] = 'yunkauser';
 	//$config['dbpwd'] = 'KKBBtS7ynWJnPnWm';

@@ -1,9 +1,9 @@
 <?php
 /*
-	web端指令格式为：[web,timestamp,operate,dev_id]
+	web端指令格式为：[websend,operate,dev_id]
 	其中，OPEN CLOSE操作已经事先写入数据库中
 	
-	收到web端指令，立即返回 [web, timestamp(同收到的指令), GOT]
+	收到web端指令，立即返回 [websend,GOT]
 */
 	require_once( 'config.php' );
 	require_once( 'net_pro.php' );
@@ -44,6 +44,8 @@
 	$sock_ids = array();								// 对应每个连接进来的 sock
 	$check_db_t = 0;
 	
+	$case_p = 0;
+	
     while( 1 ) {
 		
 		$dev_ids = array();					// 记录此次接收到的所有控制指令涉及的控制板id
@@ -83,6 +85,8 @@
 					// 处理接收到的指令
 					$one_client_order = decode_order( $data );	
 					
+					echo "\t\t".$one_client_order[0]->id."\r\n";
+					
 					if( empty($sock_ids[$key]->id) ) {				// 表明此socket是第一次发送数据
 						$sock_ids[$key]->id = $one_client_order[0]->id;
 						$sock_ids[$key]->sock = $read_sock;
@@ -100,7 +104,18 @@
 			}
 			
 		}			
-				
+		
+		if( $case_p==0 ) {
+			$db = new db( $config );
+			$sql_res = $db->get_all( 'SELECT DISTINCT ctrl FROM devices_ctrl' );
+			$db->close();
+		}
+		
+		$dev_ids[] = $sql_res[$case_p]['ctrl'];
+		$case_p++;
+		if( $case_p>=count($sql_res) )
+			$case_p = 0;
+		
 		// 处理web控制指令、硬件心跳、控制返回（实际发送控制指令）
 		// 不进行数据库内，硬件连接超时处理
 		$dev_ids = array_unique( $dev_ids );
@@ -108,7 +123,7 @@
 			echo "\t\t\t\tcheck_db when ins recvied!\r\n";
 			check_db( $dev_ids );
 		}
-		
+/*		
 		// 每5秒轮询数据表（实际发送控制指令）
 		// 进行数据库内，硬件连接超时处理
 		if( (time()-$check_db_t)>=5 ) {
@@ -122,7 +137,7 @@
 			if( (microtime(TRUE)-$s1)>=0.5 )
 				echo "check_db all use: ".(microtime(TRUE)-$s1)."s\r\n";
 		}
-		
+*/		
 		// 检查清理 socket 超时（不操作数据库，不发送指令）
 		clear_timeout_socket( $sock_ids );
 		//echo "\t\tafter clear sockets num:".count($sock_ids)."\r\n";

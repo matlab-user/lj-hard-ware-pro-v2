@@ -1,5 +1,5 @@
 <?php
-
+	header("Content-type:text/html;charset=utf-8");
 	require_once( 'db.php' );
 
 	class cardApi {
@@ -119,9 +119,8 @@
 			foreach( $query as $v ) {
 				$con .= "dev_locate='".$v['device_id']."' OR ";
 			}
-			$con = rtrim( $con, " OR" );
-			$this->db->free_result();	
-			
+			$con = rtrim( $con, " OR" );	
+		
 			// 在 devices_ctrl 表中获得 指定设备状态
 			$devices = array();
 			
@@ -158,18 +157,19 @@
 
 			$result['resp_code'] = '0';
 			$result['resp_desc'] = '';
-			
+
 			if( is_array($devices) ) {
 				$result['data'] = $devices;
 			}
 			else{
 				$result['data'] = '[]';
 			}
-			
+	
 			echo json_encode( $result );
 			return true;
 		}
-		
+
+	
 		public function get_version_info() {
 			echo '{
 				"resp_desc" : "获取成功",
@@ -362,7 +362,7 @@
 		private function operate_device_with_fee( $student_no, $device_id, $operate='OPEN', $fee, $password='', $token='', $begin_time=0, $end_time=0 ) {
 			
 			$buff = '';
-			$query = '';
+			$query = FALSE;
 			$resp_code = 0;
 			$now = 0;
 			
@@ -393,7 +393,7 @@
 								$resp_code = 1;
 							}
 							
-							echo '{ "resp_desc" : "'.$msg.'",
+							echo '{ "resp_desc" : "'.$msg.'----'.$res['student_no'].'",
 									"resp_code" : "'.$resp_code.'",
 									"data"      : "{}"
 								 }';						 
@@ -430,8 +430,13 @@
 					break;
 			}
 			
-			if( $query ) {		
-				$buff = "[web,".time().",OPEN,".$res['dev_id']."]";
+			if( $query ) {	
+			
+				$buff = "[web,$operate,".$res['dev_id']."]";
+				if( $buff!='' ) {
+					$this->socket = stream_socket_client( 'tcp://'.$this->socket_server_url.':'.$this->socket_server_port, $errno, $errstr, 15 );
+					$this->send_message( $buff );
+				}
 				
 				if( $operate=='CLOSE' ) {					// 计算本次费用
 					
@@ -448,9 +453,9 @@
 					
 					$fee_data = '{"fee_rate":"'.$price.'","time":"'.$display_fee_time.'分钟","total_fee":"'.$total_fee.'元"}';
 				
-					echo '{ "resp_desc" : "计费成功"",
+					echo '{ "resp_desc" : "计费成功",
 							"resp_code" : "0",
-							"data"      : "'.$fee_data.'"
+							"data"      : '.$fee_data.'
 						 }';	 
 				}
 				else {
@@ -463,16 +468,9 @@
 			else {		
 				echo '{
 						"resp_desc" : "设备控制失败",
-						"resp_code" : "1",
+						"resp_code" : "1001",
 						"data"      : "{}"
 					 }';
-					 
-				$buff = '';
-			}
-			
-			if( $buff!='' ) {
-				$this->socket = stream_socket_client( 'tcp://'.$this->socket_server_url.':'.$this->socket_server_port, $errno, $errstr, 15 );
-				$this->send_message( $buff );
 			}
 		}
 		
@@ -782,7 +780,7 @@
 				stream_set_timeout( $this->socket, 3 );
 				fwrite( $this->socket, $message );
 				//stream_set_blocking( $this->socket, 1 );
-				$response =  fread( $this->socket, 1024 );
+				$response = fread( $this->socket, 1024 );
 				//stream_set_blocking( $this->socket, 0 );
 			}
 			return $response;

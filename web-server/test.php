@@ -1,16 +1,19 @@
 <?php
 
 	require_once( 'config.php' );
-	require_once( 'api.php' );
+	//require_once( 'api.php' );
 		
-	$api = new cardApi( $config );
+	//$api = new cardApi( $config );
 
-	// login
+	//login
 	//$str = '{"sign":"7b3233c9f22739adf77c9513a762858a467b233b","n":"153807","action":"login","stu_no":"201520152015","t":"20150902153807","password":"111111"}';
+	//http_post_json( $str );
 	
 	// getDeviceList
 	//$str = '{"sign":"74accf498f9fd695084b61b29a4d59b990f27fe7","n":"153801","action":"getDeviceList","stu_no":"201520152015","t":"20150902153801","token":"20152015201511D1C0D64AA326B9CC95B76FC7A1DA67"}';
 	//http_post_json( $str );
+	//exit;
+
 	
 	
 /*
@@ -36,10 +39,10 @@
 		
 		exit;
 */			
-		$post["token"] = "cef6xc41UZC\/xjvK4r61E+lqVTR+A227j3eB7yeZNFuF63RXg6mRtRiJwW\/N4rjHw03POhonZiasuCQ0fFqtp5\/SCPkeL\/aLnQkx1imOIb5oH9LR584eNlV+DqN02L5ppw";
-		$authcode = $api->authcode( $post["token"], 'HX_DECODE', $config['hx_auth_key']='' );
-		echo "$authcode\r\n";
-		exit;
+//		$post["token"] = "cef6xc41UZC\/xjvK4r61E+lqVTR+A227j3eB7yeZNFuF63RXg6mRtRiJwW\/N4rjHw03POhonZiasuCQ0fFqtp5\/SCPkeL\/aLnQkx1imOIb5oH9LR584eNlV+DqN02L5ppw";
+//		$authcode = $api->authcode( $post["token"], 'HX_DECODE', $config['hx_auth_key']='' );
+//		echo "$authcode\r\n";
+//		exit;
 	
 /*
 		$ta = array( $config['token'], "1441175367", "a69224" );
@@ -47,9 +50,9 @@
 		$sign = sha1( $ta );
 		echo $sign."\r\n";
 		exit;
-*/
 
-/*	
+
+	
 	$str = '{
 		  "action" : "getDeviceList",
 		  "stu_no" : "201521040196",
@@ -58,13 +61,13 @@
 		  "token" : "201521040196AE22A25AE01824BD061C423436DF3089",
 		  "t" : "1440482594"
 		}';
-*/	
 	
+*/
 	$str = '{
 			  "action" : "openShower",
 			  "stu_no" : "201520152015",
 			  "t" : "1440489421",
-			  "device_id" : "H1-412",
+			  "device_id" : "J61021",
 			  "time" : 300,
 			  "delay_close" : "0",
 			  "delay_open" : 0,
@@ -81,7 +84,7 @@
 	  "action" : "closeShower",
 	  "stu_no" : "201520152015",
 	  "t" : "1440489421",
-	  "device_id" : "H1-412",
+	  "device_id" : "J61021",
 	  "time" : 300,
 	  "delay_close" : "0",
 	  "delay_open" : 0,
@@ -90,7 +93,13 @@
 	  "token" : "822bb2juldeXDtYGvNT6hH1rUUD2Jtrx\/hJC2mJfO\/DXdHkPKUgsvwmq1m6dG+MxSiVTBfPX3BYVZg3lp5DeXtE9yerXXwPPUHRrnRGiXW0TsxOqV0wzb44LXQiUx1Sr0g"
 	}';
 	
-	http_post_json( $str );
+	$res = http_post_json( $str );
+
+	$res[1] = '{ "resp_desc" : "计费成功","resp_code" : "0","data":{"fee_rate":"0.3元/分钟","time":"0.15分钟","total_fee":"0.05元"}}';
+
+	var_dump( json_decode( $res[1] ) );
+	
+	exit;
 /*
 	http_post_json( '{
 						"password" : "111111",
@@ -174,8 +183,9 @@
 		$ch = curl_init();
 		curl_setopt( $ch, CURLOPT_POST, 1 );
 		curl_setopt( $ch, CURLOPT_TIMEOUT, 5 );
-		curl_setopt( $ch, CURLOPT_URL, "http://218.6.163.88:50000/card/service.php" );
+		//curl_setopt( $ch, CURLOPT_URL, "http://218.6.163.88:50000/card/service.php" );
 		//curl_setopt( $ch, CURLOPT_URL, "http://127.0.0.1/web-server/service.php" );
+		curl_setopt( $ch, CURLOPT_URL, "http://10.71.29.51:50000/service.php" );
 		curl_setopt( $ch, CURLOPT_POSTFIELDS, $jsonStr );
 		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, 1 );
 		curl_setopt( $ch, CURLOPT_HTTPHEADER, array( 'Content-Type: application/json; charset=utf-8',
@@ -190,7 +200,7 @@
 		$order = array("\r\n", "\n", "\r", "\t"," ");
 		print_r( str_replace($order,'',$request_result) ) ;
 		//$result = $this->parse_card_data( $request_result );
-		//return $request_result;
+		return $request_result;
 	}
 	
 	

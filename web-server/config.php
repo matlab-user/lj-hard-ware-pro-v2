@@ -19,7 +19,7 @@
 	//$config['dbpwd'] = 'KKBBtS7ynWJnPnWm';
 	
 	$config['dbuser'] = 'root'; 											// 数据库用户名
-	$config['dbpwd'] = 'blue'; 												// 数据库用户名密码
+	$config['dbpwd'] = 'scgkapp'; 												// 数据库用户名密码
 	$config['database'] = 'yunkadb'; 											// 数据库名
 
 $config["build_map"] = array("J"=>"娇子","H"=>"鸿儒");
