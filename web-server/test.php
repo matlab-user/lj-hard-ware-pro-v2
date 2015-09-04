@@ -183,8 +183,8 @@
 		$ch = curl_init();
 		curl_setopt( $ch, CURLOPT_POST, 1 );
 		curl_setopt( $ch, CURLOPT_TIMEOUT, 5 );
-		curl_setopt( $ch, CURLOPT_URL, "http://218.6.163.88:50000/card/service.php" );
-		//curl_setopt( $ch, CURLOPT_URL, "http://127.0.0.1/web-server/service.php" );
+		//curl_setopt( $ch, CURLOPT_URL, "http://218.6.163.88:50000/card/service.php" );
+		curl_setopt( $ch, CURLOPT_URL, "http://127.0.0.1/web-server/service.php" );
 		//curl_setopt( $ch, CURLOPT_URL, "http://10.71.29.51:50000/service.php" );
 		curl_setopt( $ch, CURLOPT_POSTFIELDS, $jsonStr );
 		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, 1 );

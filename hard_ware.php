@@ -40,7 +40,7 @@
 		
 		while(TRUE) {
 			$read = $conns;
-			$sele_res = socket_select( $read, $write=NULL, $except=NULL, 10 );
+			$sele_res = socket_select( $read, $write=NULL, $except=NULL, 3 );
 			if( FALSE===$sele_res )	{	
 				socket_close( $conns[0] );
 				break;
@@ -80,7 +80,7 @@
 			
 			// 超时
 			// 发送心跳
-			if ( (time()-$jump_heart_t)>=10 ) {
+			if ( (time()-$jump_heart_t)>=1 ) {
 				$buff = "[001,6,$state]";
 				echo "\t\t\t\t\tsend heart-jump: $buff \r\n";
 				$mid_res = socket_write( $sock, $buff );

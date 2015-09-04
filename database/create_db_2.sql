@@ -26,6 +26,10 @@ CREATE TABLE IF NOT EXISTS devices_ctrl (
 	PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+CREATE INDEX ON devices_ctrl( ctrl(6) ); 
+CREATE INDEX ON devices_ctrl( dev_id(12) ); 
+CREATE INDEX ON devices_ctrl( dev_locate(12) );
+
 CREATE TABLE IF NOT EXISTS fee_record (
 	`dev_id` 		VARCHAR(12) NOT NULL,				/* 设备硬件唯一标号						*/
 	`trade_no` 		CHAR(128) NOT NULL UNIQUE,			/* 交易号								*/

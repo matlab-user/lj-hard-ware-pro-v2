@@ -120,7 +120,6 @@
 					case '6':			// 设备心跳
 					case '3':			// 控制指令返回
 						set_dev_state( $v->id, $v->state );
-						$ctrl_ids[] = $v->id;
 						break;
 					
 					case '0':			// 设备请求读状态,返回[id,1,xxxxC]
@@ -223,14 +222,16 @@
 	}
 	
 	// 更新控制板 $dev_id 上设备状态
+	// 并根据设备状态进行相应处理，包括发送命令
 	function set_dev_state( $dev_id, $dev_state ) {
 		
-		global $config;
+		global $config, $sock_ids;
 		
 		if( $dev_id=='web' )
 			return;
 		
 		// 此时 $dev_id 为箱子号（3位）
+		$case = array_fill( 0, 16, 0 );
 		
 		$state = substr( $dev_state, 0, strlen($dev_state)-1 );
 		$state = decbin( hexdec($state) );
@@ -255,6 +256,9 @@
 			$con = "dev_id='".$v['dev_id']."'";
 			$data = array( 'dev_state'=>$cur_state, 'state_recv_t'=>time() );
 			
+			if( $v['ins']=='OPEN' )
+				$case[$d_id-1] = 1;
+			
 			switch( $cur_state ) {
 				case '0':
 					if( $v['dev_state']==1 && $v['student_no']!='-1' && $v['ins']=='CLOSE' && $v['close_t']==0 )
@@ -275,8 +279,19 @@
 					$db->update( 'devices_ctrl', $data, $con );
 					break;
 			}
+			
+			// 立即进行处理
+			if( pro_dev_work($v,$db) ) {			// 需要操作时，发送命令
+				$ins = strrev( implode('',$case) );
+				$buff = sprintf( "[$v,2,%04XC]", bindec($ins) );
+				echo "set_dev_state:  instruct - $buff    $ins\r\n";
+				// 根据 ctrl 查找 socket
+				$socket = search_sock_with_ctrl( $sock_ids, $v );
+				if( !empty($socket) )
+					socket_write( $socket, $buff );
+			}
 		}
-
+	
 		$db->free_result();
 		$db->close();
 	}

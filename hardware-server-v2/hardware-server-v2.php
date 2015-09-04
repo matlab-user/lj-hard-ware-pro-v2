@@ -90,7 +90,8 @@
 					if( empty($sock_ids[$key]->id) ) {				// 表明此socket是第一次发送数据
 						$sock_ids[$key]->id = $one_client_order[0]->id;
 						$sock_ids[$key]->sock = $read_sock;
-						error_log( "case-".$sock_ids[$key]->id." was online at\t".date('Y-m-d H:i:s')."\r\n", 3, 'error_log.txt' );
+						if( $sock_ids[$key]->id!='web' )
+							error_log( "case-".$sock_ids[$key]->id." was online at\t".date('Y-m-d H:i:s')."\r\n", 3, 'error_log.txt' );
 					}
 												
 					$dev_ids = pro_ins( $one_client_order, $read_sock );				
@@ -98,7 +99,8 @@
 				}
 				else {
 					socket_close( $read_sock );
-					error_log( "\tcase-".$sock_ids[$key]->id." was offline normally at\t".date('Y-m-d H:i:s')."\r\n", 3, 'error_log.txt' );
+					if( $sock_ids[$key]->id!='web' )
+						error_log( "\tcase-".$sock_ids[$key]->id." was offline normally at\t".date('Y-m-d H:i:s')."\r\n", 3, 'error_log.txt' );
 					unset( $sock_ids[$key] );
 				}	
 			}	
@@ -116,8 +118,7 @@
 		if( $case_p>=count($sql_res) )
 			$case_p = 0;
 		
-		// 处理web控制指令、硬件心跳、控制返回（实际发送控制指令）
-		// 不进行数据库内，硬件连接超时处理
+		// 主要处理web控制指令（实际发送控制指令）
 		$dev_ids = array_unique( $dev_ids );
 		if( count($dev_ids)>0 ) {
 			echo "\t\t\t\tcheck_db when ins recvied!\r\n";
