@@ -180,7 +180,7 @@
 		global $config;
 		
 		$db = new db( $config );
-		$data = array( 'price'=>$info['price'], 'student_no'=>$info['student_no'], 'dev_id'=>$info['dev_id'], 'open_t'=>$info['open_t'] );
+		$data = array( 'price'=>$info['price'], 'student_no'=>$info['student_no'], 'dev_id'=>$info['dev_id'], 'open_t'=>$info['open_t'], 'trade_no'=>date("YmdHis").rand(1000,9999) );
 		$data['break_t'] = $info['break_t'];
 		$data['fee_type'] = $type;
 		
@@ -291,25 +291,14 @@
 		$db = new db( $config );
 		
 		$dev_ids = array_unique( $dev_ids );
-		
 		$case = array();
-		$timeout_check = 0;
 		$con = '';
 		
-		if( count($dev_ids)==0 ) {			// 遍历全部设备
-			$timeout_check = 1;
-			$mid = $db->get_all( 'select distinct ctrl from devices_ctrl' );
-			foreach( $mid as $v ) {
-				$con .= "ctrl='".$v['ctrl']."' OR ";
-				$case[$v['ctrl']] = array_fill( 0, 16, 0 );
-			}
-		}
-		else {
-			foreach( $dev_ids as $v ) {
-				$con .= "ctrl='".$v."' OR ";
-				$case[$v] = array_fill( 0, 16, 0 );
-			}	
-		}
+		foreach( $dev_ids as $v ) {
+			$con .= "ctrl='".$v."' OR ";
+			$case[$v] = array_fill( 0, 16, 0 );
+		}	
+
 		$con = rtrim( $con, 'OR ' );
 		
 		$need_ctrl = array();
@@ -326,7 +315,7 @@
 				$case[$v2['ctrl']][$d_id] = 1;
 			
 			// 仅处理设备断线，心跳超时情况的处理
-			if( $timeout_check==1 && (time()-$v2['state_recv_t'])>=30 ) {		// 如需要，首先进行设备连接中断处理
+			if( (time()-$v2['state_recv_t'])>=30 ) {		// 如需要，首先进行设备连接中断处理
 									
 				if( $v2['student_no']!='-1' ) {
 					
@@ -340,7 +329,6 @@
 					$con = "dev_id='".$v2['dev_id']."'";
 					$data = array('student_no'=>'-1','ins'=>'NONE','ins_recv_t'=>0,'ins_send_t'=>0,'open_t'=>0,'close_t'=>0,'break_t'=>0,'remark'=>'');
 					$db->update( 'devices_ctrl', $data, $con );
-
 				}
 			}
 			

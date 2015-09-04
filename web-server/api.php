@@ -393,7 +393,7 @@
 								$resp_code = 1;
 							}
 							
-							echo '{ "resp_desc" : "'.$msg.'----'.$res['student_no'].'",
+							echo '{ "resp_desc" : "'.$msg.'",
 									"resp_code" : "'.$resp_code.'",
 									"data"      : "{}"
 								 }';						 
@@ -440,23 +440,29 @@
 				
 				if( $operate=='CLOSE' ) {					// 计算本次费用
 					
-					if( $res['dev_type']=='washer' ) {
-						$display_fee_time = 50;
-						$total_fee = 4;
-						$price = '4元/50分钟';
+					if( $res['open_t']<=0 ) {
+						$display_fee_time = 0;
+						$total_fee = 0;
 					}
 					else {
-						$display_fee_time = round( ($now-$res['open_t']-$res['break_t'] )/60, 2 );
-						$total_fee = round( $display_fee_time * $res['price']/100, 2 );
-						$price = ( $res['price']/100 ).'元/分钟';
+						if( $res['dev_type']=='washer' ) {
+							$display_fee_time = 50;
+							$total_fee = 4;
+							$price = '4元/50分钟';
+						}
+						else {
+							$display_fee_time = round( ($now-$res['open_t']-$res['break_t'] )/60, 2 );
+							$total_fee = round( $display_fee_time * $res['price']/100, 2 );
+						}
 					}
 					
+					$price = ( $res['price']/100 ).'元/分钟';
 					$fee_data = '{"fee_rate":"'.$price.'","time":"'.$display_fee_time.'分钟","total_fee":"'.$total_fee.'元"}';
-				
+					
 					echo '{ "resp_desc" : "计费成功",
 							"resp_code" : "0",
 							"data"      : '.$fee_data.'
-						 }';	 
+						 }';		 
 				}
 				else {
 					echo '{ "resp_desc" : "设备开启成功",
@@ -598,15 +604,8 @@
 		public function recharge( $student_no, $token, $password, $money, $name ) {
 			$deposit_no = date('YmdHis') . rand(1000,9999);
 			$response = $this->tpdeposit( $student_no, $token, $deposit_no, $password, $money, $name );
-
 			echo json_encode( $response );
 		}
-
-		public function trade( $student_no, $token, $password, $trade_branch_id, $trade_money ) {
-			$trade_no = date('YmdHis').rand(1000,9999);
-			$response = $this->tptrade( $student_no, $token, $trade_no, $password, $trade_branch_id, $trade_money );
-			echo json_encode( $response );
-		}	
 
 		 /**
 		 * 验证配置接口信息

@@ -105,6 +105,7 @@
 			
 		}			
 		
+		$s1 = microtime( true );
 		if( $case_p==0 ) {
 			$db = new db( $config );
 			$sql_res = $db->get_all( 'SELECT DISTINCT ctrl FROM devices_ctrl' );
@@ -123,6 +124,7 @@
 			echo "\t\t\t\tcheck_db when ins recvied!\r\n";
 			check_db( $dev_ids );
 		}
+		echo "cost ".(microtime(true)-$s1)." s\r\n";
 /*		
 		// 每5秒轮询数据表（实际发送控制指令）
 		// 进行数据库内，硬件连接超时处理

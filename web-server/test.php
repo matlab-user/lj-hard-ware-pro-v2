@@ -95,9 +95,9 @@
 	
 	$res = http_post_json( $str );
 
-	$res[1] = '{ "resp_desc" : "计费成功","resp_code" : "0","data":{"fee_rate":"0.3元/分钟","time":"0.15分钟","total_fee":"0.05元"}}';
+	//$res[1] = '{ "resp_desc" : "计费成功","resp_code" : "0","data":{"fee_rate":"0.3元/分钟","time":"0.15分钟","total_fee":"0.05元"}}';
 
-	var_dump( json_decode( $res[1] ) );
+	//var_dump( json_decode( $res[1] ) );
 	
 	exit;
 /*
@@ -183,9 +183,9 @@
 		$ch = curl_init();
 		curl_setopt( $ch, CURLOPT_POST, 1 );
 		curl_setopt( $ch, CURLOPT_TIMEOUT, 5 );
-		//curl_setopt( $ch, CURLOPT_URL, "http://218.6.163.88:50000/card/service.php" );
+		curl_setopt( $ch, CURLOPT_URL, "http://218.6.163.88:50000/card/service.php" );
 		//curl_setopt( $ch, CURLOPT_URL, "http://127.0.0.1/web-server/service.php" );
-		curl_setopt( $ch, CURLOPT_URL, "http://10.71.29.51:50000/service.php" );
+		//curl_setopt( $ch, CURLOPT_URL, "http://10.71.29.51:50000/service.php" );
 		curl_setopt( $ch, CURLOPT_POSTFIELDS, $jsonStr );
 		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, 1 );
 		curl_setopt( $ch, CURLOPT_HTTPHEADER, array( 'Content-Type: application/json; charset=utf-8',
@@ -198,7 +198,7 @@
 		$request_result = array($httpCode, $response);
 		
 		$order = array("\r\n", "\n", "\r", "\t"," ");
-		print_r( str_replace($order,'',$request_result) ) ;
+		print_r( str_replace($order,'',$request_result) );
 		//$result = $this->parse_card_data( $request_result );
 		return $request_result;
 	}
