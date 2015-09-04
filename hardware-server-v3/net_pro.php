@@ -121,8 +121,8 @@
 					case '6':			// 设备心跳
 					case '3':			// 控制指令返回
 						set_dev_state( $v->id, $v->state );
-						if( $v->id=='001' || $v->id=='012' )
-							echo "\t\t".$v->id.'---------'.$v->state."\r\n";
+						//if( $v->id=='001' || $v->id=='012' )
+							//echo "\t\t".$v->id.'---------'.$v->state."\r\n";
 						$ctrl_ids[] = $v->id;
 						break;
 					
@@ -292,7 +292,7 @@
 	}
 	
 	// 数据库遍历，处理设备事务
-	// $dev_ids - 需要处理的设备id，数组
+	// $dev_ids - 需要处理的设备id(case id)，数组
 	// 为空，则遍历全部设备，并且进行硬件设备连接超时处理
 	function check_db( $dev_ids ) {
 		

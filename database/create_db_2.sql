@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS devices_ctrl (
 	`ctrl`			VARCHAR(6) NOT NULL,					/* 设备所属控制器							*/
 
 	`price`			DOUBLE NOT NULL,						/* 单价：分/分钟							*/
-	`student_no` 	VARCHAR(24) NOT NULL default '-1',		/* 当前占用设备学生号， -1-未占用			*/
+	`student_no` 	CHAR(24) NOT NULL default '-1',		/* 当前占用设备学生号， -1-未占用			*/
 	`ins`			VARCHAR(12) NOT NULL DEFAULT 'NONE',	/* 当前设备控制指令，OPEN, 	CLOSE			*/
 	`ins_recv_t` 	BIGINT NOT NULL DEFAULT 0,				/* 收到指令时的UTC时间戳					*/
 	`ins_send_t` 	BIGINT NOT NULL DEFAULT 0,	
@@ -26,14 +26,15 @@ CREATE TABLE IF NOT EXISTS devices_ctrl (
 	PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-CREATE INDEX ON devices_ctrl( ctrl(6) ); 
-CREATE INDEX ON devices_ctrl( dev_id(12) ); 
-CREATE INDEX ON devices_ctrl( dev_locate(12) );
+CREATE INDEX index_ctrl ON devices_ctrl( ctrl(6) ); 
+CREATE INDEX index_dev_id ON devices_ctrl( dev_id(12) ); 
+CREATE INDEX index_dev_locate ON devices_ctrl( dev_locate(12) );
 
 CREATE TABLE IF NOT EXISTS fee_record (
 	`dev_id` 		VARCHAR(12) NOT NULL,				/* 设备硬件唯一标号						*/
+	`dev_type`		VARCHAR(12) NOT NULL,				/* shower、washer						*/
 	`trade_no` 		CHAR(128) NOT NULL UNIQUE,			/* 交易号								*/
-	`student_no` 	INT(11) NOT NULL,					/* 设备使用学生学号						*/
+	`student_no` 	CHAR(24) NOT NULL,				/* 设备使用学生学号						*/
 	`open_t` 		BIGINT NOT NULL DEFAULT 0,			/* 设备开启时间							*/
 	`close_t` 		BIGINT NOT NULL DEFAULT 0,			/* 设备关闭时间							*/
 	`break_t` 		BIGINT NOT NULL DEFAULT 0,			/* 设备使用期间中断时间					*/

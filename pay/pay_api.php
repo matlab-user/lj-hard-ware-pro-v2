@@ -8,7 +8,7 @@
 		public $pay_token = '';
 		private $user_login_token;
 		private $config;
-		private $db;
+		public $db;
 		private $school_id;
 			
 		public function __construct( $config ) {
@@ -26,8 +26,12 @@
 			$school_id = $this->school_id;
 			$post_data = json_encode( array('body'=>array('studentNo'=>$student_no,'password'=>$password,'schoolId'=>$school_id)) );
 			$response = $this->http_post_json( 'signInAndGetUser', $post_data );
+			
+			$token = '';
 			//update token
-			$token = $response['data']['userMap']['token'];
+			if( !empty($response) )
+				$token = $response['data']['userMap']['token'];
+			
 			if($token){
 				$response = $this->http_post_json( 'signInAndGetUser', $post_data );
 				//update token

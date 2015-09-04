@@ -1,5 +1,6 @@
 <?php
-	header("Content-type:text/html;charset=utf-8");
+	header( 'Content-type:text/html;charset=utf-8' );
+	
 	require_once( 'db.php' );
 
 	class cardApi {
@@ -49,7 +50,7 @@
 			else {
 				$data = array( 'student_no'=>$student_no, 'device_id'=>$device_id );
 				$result = $this->db->insert( 'devices', $data );
-				if($result){
+				if( $result ) {
 					echo '{
 							"resp_desc" : "绑定成功",
 							"resp_code" : "0",
@@ -70,7 +71,7 @@
 		//解除设备
 		public function unbind_device( $student_no, $device_id, $token ) {
 
-			$row = $this->db->get_one( "select * from devices where student_no='$student_no' and device_id='$device_id' limit 1" );
+			$row = $this->db->get_one( "SELECT * FROM devices WHERE student_no='$student_no' AND device_id='$device_id' LIMIT 1" );
 			if( $row ) {
 				if( $row['flag']==1 ) {
 					echo '{
@@ -80,7 +81,7 @@
 						 }';
 				}
 				else {
-					$result = $this->db->delete( "devices","device_id='$device_id' and student_no='$student_no'" );
+					$result = $this->db->delete( "devices","device_id='$device_id' AND student_no='$student_no'" );
 					if( $result ) {
 						echo '{
 								"resp_desc" : "删除成功",
@@ -251,7 +252,7 @@
 
 		//保修及意见反馈
 		public function feedback( $student_no, $msg, $device_id, $desc, $type, $token ) {
-			//$this->db = new db($this->config);	
+	
 			$data['student_no'] = $student_no;
 			$data['device_id'] = $device_id;
 			$data['post_desc'] = $desc;
@@ -307,7 +308,6 @@
 			echo json_encode( $result );
 			return true;
 		}
-
 
 		//修改密码
 		public function change_password( $student_no, $student_password, $new_password ) {
@@ -367,7 +367,7 @@
 			$now = 0;
 			
 			// 根据 device_id 获取设备是否可以使用，并且获得设备硬件控制id
-			$res = $this->db->get_all( "SELECT student_no, open_t, dev_id, break_t, dev_locate, dev_state, ins, dev_type, price FROM devices_ctrl WHERE dev_locate='$device_id'" );
+			$res = $this->db->get_all( "SELECT * FROM devices_ctrl WHERE dev_locate='$device_id'" );
 			$res = $res[0];
 			
 			switch( $operate ) {
@@ -389,13 +389,13 @@
 									$msg = '设备正在关闭，请稍后再试';
 							}
 							else {
-								$msg = '设备正被别人占用，请稍后再试 '.$student_no;
+								$msg = '设备正被别人占用，请稍后再试';
 								$resp_code = 1;
 							}
 							
 							echo '{ "resp_desc" : "'.$msg.'",
 									"resp_code" : "'.$resp_code.'",
-									"data"      : "{}"
+									"data"      : {}
 								 }';						 
 							break;
 					}
@@ -416,16 +416,14 @@
 							// 如数据库写入成功，则开始计费
 						}
 						else {
-							$msg = '设备正被别人占用  '.$student_no;
+							$msg = '设备正被别人占用';
 							$resp_code = 1;
 						}
 					}
 					
 					if( $msg!='' ) {
-						echo '{ "resp_desc" : "'.$msg.'",
-								"resp_code" : "'.$resp_code.'",
-								"data"      : "{}"
-							 }';	
+						$str = '{ "resp_desc":"'.$msg.'","resp_code":"'.$resp_code.'","data":"{}"}';	
+						echo $str."\r\n";
 					}
 					break;
 			}
@@ -433,6 +431,7 @@
 			if( $query ) {	
 			
 				$buff = "[web,$operate,".$res['dev_id']."]";
+				
 				if( $buff!='' ) {
 					$this->socket = stream_socket_client( 'tcp://'.$this->socket_server_url.':'.$this->socket_server_port, $errno, $errstr, 15 );
 					$this->send_message( $buff );
@@ -467,15 +466,15 @@
 				else {
 					echo '{ "resp_desc" : "设备开启成功",
 							"resp_code" : "0",
-							"data"      : "{}"
+							"data"      : {}
 						 }';
 				}
 			}
 			else {		
 				echo '{
 						"resp_desc" : "设备控制失败",
-						"resp_code" : "1001",
-						"data"      : "{}"
+						"resp_code" : "0",
+						"data"      : {}
 					 }';
 			}
 		}
@@ -501,7 +500,7 @@
 			echo '{
 					"resp_desc" : "当前设备状态是"'.$st.',
 					"resp_code" : "0",
-					"data"      : "{\"status\":\"'.$st_c.'\"}"
+					"data"      : {\"status\":\"'.$st_c.'\"}
 				 }';
 		}
 
@@ -547,7 +546,7 @@
 				//加密token
 				//$user_info["token"] = $user_map["token"];
 				$auth_token = $student_no.'|>|'.$student_password.'|>|'.$user_map['token'];
-				$encode_auth_token = $this->authcode( $auth_token, 'ENCODE', $encode_auth_key );		// $encode_auth_key 没有赋值
+				$encode_auth_token = $this->authcode( $auth_token, 'ENCODE', $config['hx_auth_key'] );		// $encode_auth_key 没有赋值
 				$user_info['token'] = $encode_auth_token;
 				
 				if( $row ) {

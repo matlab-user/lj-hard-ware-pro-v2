@@ -16,7 +16,6 @@
 	
 	class order {
 		public $id = '';
-		public $t = 0;
 		public $op = '';
 		public $state = '';
 		public $dev_id = '';
@@ -29,7 +28,7 @@
 	$l_port = $config['port'];
 		
 	$sock = socket_create( AF_INET, SOCK_STREAM, 0 );
-	socket_set_option( $sock, SOL_SOCKET, SO_RCVTIMEO, array("sec"=>10, "usec"=>0 ) );
+	socket_set_option( $sock, SOL_SOCKET, SO_RCVTIMEO, array("sec"=>3, "usec"=>0 ) );
 	socket_set_option( $sock, SOL_SOCKET, SO_SNDTIMEO, array("sec"=>3, "usec"=>0 ) );
 	socket_set_option( $sock, SOL_SOCKET, SO_REUSEADDR, 1 );
 	
@@ -48,7 +47,8 @@
 	
     while( 1 ) {
 		
-		$dev_ids = array();					// 记录此次接收到的所有控制指令涉及的控制板id
+		$dev_ids = array();			// 记录接收到的所有控制指令涉及的控制板id
+		$send_ins_dev_id = array();
 		
 		$read = gen_sock_chain( $sock_ids, $sock );
 		
@@ -84,8 +84,8 @@
 					//echo "e1-\tclient send: ".$data."\t".date("Y-m-d H:i:s")."\r\n";
 					// 处理接收到的指令
 					$one_client_order = decode_order( $data );	
-					
-					echo "\t\t".$one_client_order[0]->id."\r\n";
+					if( $one_client_order[0]->id=='web' )				
+						echo "\t\t".($one_client_order[0]->id).'--'.($one_client_order[0]->op).'--'.($one_client_order[0]->dev_id)."\r\n";
 					
 					if( empty($sock_ids[$key]->id) ) {				// 表明此socket是第一次发送数据
 						$sock_ids[$key]->id = $one_client_order[0]->id;
@@ -93,9 +93,15 @@
 						if( $sock_ids[$key]->id!='web' )
 							error_log( "case-".$sock_ids[$key]->id." was online at\t".date('Y-m-d H:i:s')."\r\n", 3, 'error_log.txt' );
 					}
-												
-					$dev_ids = pro_ins( $one_client_order, $read_sock );				
-					unset( $one_client_order );
+					
+					if( $one_client_order[0]->id=='web' )
+						$send_ins_dev_id[] = substr( $one_client_order[0]->dev_id, 0, 3 );
+					else {
+						$sub_dev_ids = pro_ins( $one_client_order, $read_sock );
+						$dev_ids = array_merge( $dev_ids, $sub_dev_ids );
+					}		
+					
+					unset( $one_client_order );	
 				}
 				else {
 					socket_close( $read_sock );
@@ -104,27 +110,36 @@
 					unset( $sock_ids[$key] );
 				}	
 			}	
-		}			
+		}	
 		
 		$s1 = microtime( true );
+		
+		// 主要处理web控制指令（实际发送控制指令）
+		$send_ins_dev_id = array_unique( $send_ins_dev_id );
+		if( count($send_ins_dev_id)>4 )
+			$send_ins_dev_id = array_slice( $send_ins_dev_id, 0, 4 );
+		if( count($send_ins_dev_id)>0 )
+			check_db( $send_ins_dev_id );
+		
+		$dev_ids = array_unique( $dev_ids );
+		if( count($dev_ids)>5 )
+			$dev_ids = array_slice( $dev_ids, 0, 4 );
+			
 		if( $case_p==0 ) {
 			$db = new db( $config );
 			$sql_res = $db->get_all( 'SELECT DISTINCT ctrl FROM devices_ctrl' );
 			$db->close();
-		}
-		
+		}	
+
 		$dev_ids[] = $sql_res[$case_p]['ctrl'];
 		$case_p++;
+		
 		if( $case_p>=count($sql_res) )
 			$case_p = 0;
 		
-		// 处理web控制指令、硬件心跳、控制返回（实际发送控制指令）
-		// 不进行数据库内，硬件连接超时处理
-		$dev_ids = array_unique( $dev_ids );
-		if( count($dev_ids)>0 ) {
-			echo "\t\t\t\tcheck_db when ins recvied!\r\n";
+		if( count($dev_ids)>0 )
 			check_db( $dev_ids );
-		}
+
 		echo "cost ".(microtime(true)-$s1)." s\r\n";
 		
 		// 检查清理 socket 超时（不操作数据库，不发送指令）

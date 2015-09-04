@@ -6,13 +6,13 @@
 	//$api = new cardApi( $config );
 
 	//login
-	//$str = '{"sign":"7b3233c9f22739adf77c9513a762858a467b233b","n":"153807","action":"login","stu_no":"201520152015","t":"20150902153807","password":"111111"}';
-	//http_post_json( $str );
+	$str = '{"sign":"7b3233c9f22739adf77c9513a762858a467b233b","n":"153807","action":"login","stu_no":"201520152015","t":"20150902153807","password":"111111"}';
+	http_post_json( $str );
 	
 	// getDeviceList
-	//$str = '{"sign":"74accf498f9fd695084b61b29a4d59b990f27fe7","n":"153801","action":"getDeviceList","stu_no":"201520152015","t":"20150902153801","token":"20152015201511D1C0D64AA326B9CC95B76FC7A1DA67"}';
-	//http_post_json( $str );
-	//exit;
+	$str = '{"sign":"74accf498f9fd695084b61b29a4d59b990f27fe7","n":"153801","action":"getDeviceList","stu_no":"201520152015","t":"20150902153801","token":"20152015201511D1C0D64AA326B9CC95B76FC7A1DA67"}';
+	http_post_json( $str );
+	exit;
 
 	
 	
@@ -183,8 +183,8 @@
 		$ch = curl_init();
 		curl_setopt( $ch, CURLOPT_POST, 1 );
 		curl_setopt( $ch, CURLOPT_TIMEOUT, 5 );
-		//curl_setopt( $ch, CURLOPT_URL, "http://218.6.163.88:50000/card/service.php" );
-		curl_setopt( $ch, CURLOPT_URL, "http://127.0.0.1/web-server/service.php" );
+		curl_setopt( $ch, CURLOPT_URL, "http://218.6.163.88:50000/card/service.php" );
+		//curl_setopt( $ch, CURLOPT_URL, "http://127.0.0.1/web-server/service.php" );
 		//curl_setopt( $ch, CURLOPT_URL, "http://10.71.29.51:50000/service.php" );
 		curl_setopt( $ch, CURLOPT_POSTFIELDS, $jsonStr );
 		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, 1 );
