@@ -7,8 +7,9 @@ CREATE TABLE IF NOT EXISTS devices_ctrl (
 	`dev_id`		VARCHAR(12) UNIQUE NOT NULL,			/* 设备硬件唯一标号，控制设备用 			*/
 	`dev_type`		VARCHAR(12) NOT NULL,					/* shower、washer、box						*/
 	`dev_locate` 	VARCHAR(12) NOT NULL,					/* 楼号-房号  楼号-楼层号					*/
-	`dev_state` 	INT(2) NOT NULL DEFAULT -1,				/* 设备实际状态	0-close  1-open  -1-unknown	*/
-	`state_recv_t` 	BIGINT NOT NULL DEFAULT 0,				/*	设备状态更新时间						*/
+
+/*	`dev_state` 	INT(2) NOT NULL DEFAULT -1,				 设备实际状态	0-close  1-open  -1-unknown	*/
+/*	`state_recv_t` 	BIGINT NOT NULL DEFAULT 0,				 设备状态更新时间							*/
 	
 	`ctrl`			VARCHAR(6) NOT NULL,					/* 设备所属控制器							*/
 

@@ -125,7 +125,7 @@
 			// 在 devices_ctrl 表中获得 指定设备状态
 			$devices = array();
 			
-			$res = $this->db->get_all( 'SELECT student_no, dev_id, dev_locate, dev_state, ins, dev_type FROM devices_ctrl WHERE '.$con );
+			$res = $this->db->get_all( 'SELECT student_no, dev_id, dev_locate, ins, dev_type FROM devices_ctrl WHERE '.$con );
 			foreach( $res as $v ) {
 				$building_info = $this->parse_device_by_device_id( $v['dev_locate'] );
 				$item['building'] = $this->config['build_map'][$building_info['building']];
@@ -143,7 +143,7 @@
 				
 				$item['deviceStatus'] = 2;					// 被他人占用
 				if( $v['student_no']=='-1' ) {
-					if( $v['dev_state']=='0' )
+					if( $v['ins']=='NONE' )
 						$item['deviceStatus'] = 0;			// 设备空闲
 				}
 				else {
@@ -367,18 +367,16 @@
 			$now = 0;
 			
 			// 根据 device_id 获取设备是否可以使用，并且获得设备硬件控制id
-			$res = $this->db->get_all( "SELECT * FROM devices_ctrl WHERE dev_locate='$device_id'" );
+			$res = $this->db->get_all( "SELECT student_no, ins FROM devices_ctrl WHERE dev_locate='$device_id'" );
 			$res = $res[0];
 			
 			switch( $operate ) {
 				case 'OPEN':
 					switch( $res['student_no'] ) {
 						case '-1':
-							if( $res['dev_state']=='0' ) {				// 正常状态，可以使用
-								// 写数据库(加上条件，保证合法抢占)，socket发送指令
-								$data = array( 'student_no'=>$student_no, 'ins'=>'OPEN', 'ins_recv_t'=>time() );
-								$query = $this->db->update( 'devices_ctrl', $data, "dev_id='".$res['dev_id']."' AND student_no='-1'" );
-							}
+							// 写数据库(加上条件，保证合法抢占)，socket发送指令
+							$data = array( 'student_no'=>$student_no, 'ins'=>'OPEN', 'ins_recv_t'=>time() );
+							$query = $this->db->update( 'devices_ctrl', $data, "dev_id='".$res['dev_id']."' AND student_no='-1'" );
 							break;
 						
 						default:
@@ -482,11 +480,11 @@
 		// $device_id - 设备位置信息，不是设备硬件id
 		public function read_device_status( $student_no, $device_id ) {
 			
-			$res = $this->db->get_all( "SELECT dev_state, student_no, state_recv_t FROM devices_ctrl WHERE dev_locate='$device_id'" );
+			$res = $this->db->get_all( "SELECT ins, student_no, state_recv_t FROM devices_ctrl WHERE dev_locate='$device_id'" );
 			$res = $res[0];
 			
-			switch( $res['dev_state'] ) {
-				case '0':
+			switch( $res['ins'] ) {
+				case 'NONE':
 					$st = 'ON';
 					$st_c = 1;
 					break;
