@@ -105,7 +105,7 @@
 			continue;
 			
 		// 处理来自硬件的反馈数据(指令反馈、心跳、读状态)
-		if( $v->op=='6' || $v->op=='3' || $v->op=='0' || $v->op=='4' ) {
+		if( $v->op=='6' || $v->op=='3' || $v->op=='0' ) {
 			if( !isset($case_stat[$v->id]) )
 				$case_stat[$v->id] = new heart_beat();
 			
@@ -116,14 +116,14 @@
 			$case_stat[$v->id]->cur_st_arr = str_split( $state );
 			$case_stat[$v->id]->recv_t = time();
 		}
-		
+				
 		$buff = '';
 		switch($v->op) {
 			case '6':			// 设备心跳
 			case '3':			// 控制指令返回
 				set_dev_state( $v->id );
-				//if( $v->id=='001' || $v->id=='012' )
-					//echo "\t\t".$v->id.'---------'.$v->state."\r\n";
+				if( $v->id=='001' || $v->id=='012' )
+					echo "\t\t".$v->id.'---------'.$v->state."\r\n";
 				break;
 			
 			case '0':			// 设备请求读状态,返回[id,1,xxxxC]
@@ -139,14 +139,11 @@
 			
 			default:
 				break;
-			
-			if( !empty($buff) )
-				try{
-					socket_write( $read_sock, $buff );
-				}
-				catch( Exception $e ) {}
 		}
 
+		if( !empty($buff) )
+			socket_write( $read_sock, $buff );
+			
 		return $ctrl_ids;
 	}
 //------------------------------------------------------------------------------------
@@ -171,7 +168,7 @@
 			if( $v['student_no']!='-1' && $v['ins']=='OPEN' )
 				$st[$d_id-1] = 1;
 		}
-		
+
 		$st = strrev( implode('',$st) );
 		$st = sprintf( "%04XC", bindec($st) );
 		return $st;
@@ -370,7 +367,7 @@
 		}
 		
 		$need_ctrl = array_unique( $need_ctrl );
-				
+		
 		if( count($need_ctrl)>0 )  {						// 需要控制
 			foreach( $need_ctrl as $v ) {
 				$ins = strrev( implode('',$case[$v]) );
@@ -512,7 +509,7 @@
 				break;
 			
 			default:
-				echo "....................$dev_state--".$rec['open_t'].'>>'.$rec['ins']."--".$rec['ins_send_t'].'--'.$rec['ins_recv_t'].'--'.$rec['open_t']."\r\n";
+				//echo "....................$dev_state--".$rec['open_t'].'>>'.$rec['ins']."--".$rec['ins_send_t'].'--'.$rec['ins_recv_t'].'--'.$rec['open_t']."\r\n";
 				switch( $rec['ins'] ) {
 					case 'OPEN':
 						if( $dev_state==0 ) {									// 中断计时，首次开启功能，逻辑复杂

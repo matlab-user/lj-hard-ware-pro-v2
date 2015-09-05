@@ -39,8 +39,8 @@
 	$l_port = $config['port'];
 		
 	$sock = socket_create( AF_INET, SOCK_STREAM, 0 );
-	socket_set_option( $sock, SOL_SOCKET, SO_RCVTIMEO, array("sec"=>3, "usec"=>0 ) );
-	socket_set_option( $sock, SOL_SOCKET, SO_SNDTIMEO, array("sec"=>3, "usec"=>0 ) );
+	socket_set_option( $sock, SOL_SOCKET, SO_RCVTIMEO, array("sec"=>5, "usec"=>0 ) );
+	socket_set_option( $sock, SOL_SOCKET, SO_SNDTIMEO, array("sec"=>5, "usec"=>0 ) );
 	socket_set_option( $sock, SOL_SOCKET, SO_REUSEADDR, 1 );
 	
 	if( socket_bind($sock, $l_ip, $l_port)===FALSE ) {       		// 绑定 ip、port
@@ -65,14 +65,9 @@
 	
 	foreach( $sql_res as $v )
 		$dev_ids[] = $v['ctrl'];
-/*	
-	$s1 = microtime( true );
-	foreach( $dev_ids as $v ) {
-		read_hw_state( $v );
-	}
-	echo "cost ".(microtime(true)-$s1)." s\r\n";
-	exit;
-*/
+
+	$case_p = 0;
+	
     while( 1 ) {
 		
 		$send_ins_dev_id = array();
@@ -129,6 +124,7 @@
 						socket_write( $read_sock, $buff );
 					}
 					else {		// 仅处理硬件事务，以控制箱为单位
+						//echo "++++++++++++++".$one_client_order[0]->id.'  '.$one_client_order[0]->state."\r\n";
 						pro_ins( $one_client_order[0], $read_sock );
 					}		
 					
@@ -155,12 +151,29 @@
 		// 轮询除 web 控制外的其它控制箱
 		$mid = array_diff( $dev_ids, $send_ins_dev_id );
 		//echo "rest cases: ".count($mid)."\r\n";
-		if( count($mid)>0 )
-			check_db( $mid );
 		
-		echo "case state num: ".count($case_stat)."\r\n";
-		if( (microtime(true)-$s1)>0.5 ) {
+		$new_m = array();
+		for( $i=0; $i<count($dev_ids); $i++ ) {
+			if( $case_p>(count($dev_ids)-1) )
+				$case_p = 0;
+			
+			if( in_array($dev_ids[$case_p], $mid) ) {
+				$new_m[] = $dev_ids[$case_p];
+				$case_p++;
+				break;
+			}
+			else
+				$case_p++;
+		}
+				
+		if( count($new_m)>0 ) {
+			//echo "\t\t".$new_m[0]."\r\n";
+			check_db( $new_m );
+		}	
+
+		if( (microtime(true)-$s1)>0.6 ) {
 			echo "cost ".(microtime(true)-$s1)." s\r\n";
+			echo "case state num: ".count($case_stat)."\r\n";
 		}
 		
 		// 检查清理 socket 超时（不操作数据库，不发送指令）
