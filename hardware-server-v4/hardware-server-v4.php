@@ -72,7 +72,7 @@
 	}
 	echo "cost ".(microtime(true)-$s1)." s\r\n";
 	exit;
-*/	
+*/
     while( 1 ) {
 		
 		$send_ins_dev_id = array();
@@ -145,7 +145,7 @@
 		
 		// 主要处理web控制指令（实际发送控制指令）
 		$send_ins_dev_id = array_unique( $send_ins_dev_id );
-		echo "web ins: ".count($send_ins_dev_id)."\r\n";
+		//echo "web ins: ".count($send_ins_dev_id)."\r\n";
 
 		if( count($send_ins_dev_id)>4 )
 			$send_ins_dev_id = array_slice( $send_ins_dev_id, 0, 4 );
@@ -154,12 +154,14 @@
 		
 		// 轮询除 web 控制外的其它控制箱
 		$mid = array_diff( $dev_ids, $send_ins_dev_id );
-		echo "rest cases: ".count($mid)."\r\n";
+		//echo "rest cases: ".count($mid)."\r\n";
 		if( count($mid)>0 )
 			check_db( $mid );
 		
 		echo "case state num: ".count($case_stat)."\r\n";
-		echo "cost ".(microtime(true)-$s1)." s\r\n";
+		if( (microtime(true)-$s1)>0.5 ) {
+			echo "cost ".(microtime(true)-$s1)." s\r\n";
+		}
 		
 		// 检查清理 socket 超时（不操作数据库，不发送指令）
 		clear_timeout_socket( $sock_ids );

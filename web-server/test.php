@@ -12,8 +12,6 @@
 	// getDeviceList
 	$str = '{"sign":"74accf498f9fd695084b61b29a4d59b990f27fe7","n":"153801","action":"getDeviceList","stu_no":"201520152015","t":"20150902153801","token":"20152015201511D1C0D64AA326B9CC95B76FC7A1DA67"}';
 	http_post_json( $str );
-	exit;
-
 	
 	
 /*
@@ -79,7 +77,8 @@
 		
 	http_post_json( $str );
 	
-	sleep( 10 );
+	sleep( 30 );
+	echo "close the shower\r\n";
 	$str = '{
 	  "action" : "closeShower",
 	  "stu_no" : "201520152015",
@@ -183,8 +182,8 @@
 		$ch = curl_init();
 		curl_setopt( $ch, CURLOPT_POST, 1 );
 		curl_setopt( $ch, CURLOPT_TIMEOUT, 5 );
-		curl_setopt( $ch, CURLOPT_URL, "http://218.6.163.88:50000/card/service.php" );
-		//curl_setopt( $ch, CURLOPT_URL, "http://127.0.0.1/web-server/service.php" );
+		//curl_setopt( $ch, CURLOPT_URL, "http://218.6.163.88:50000/card/service.php" );
+		curl_setopt( $ch, CURLOPT_URL, "http://127.0.0.1/web-server/service.php" );
 		//curl_setopt( $ch, CURLOPT_URL, "http://10.71.29.51:50000/service.php" );
 		curl_setopt( $ch, CURLOPT_POSTFIELDS, $jsonStr );
 		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, 1 );

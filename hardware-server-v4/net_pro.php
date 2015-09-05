@@ -255,6 +255,7 @@
 		$db = new db( $config );
 		$res = $db->get_all( "SELECT * FROM devices_ctrl WHERE ctrl='$dev_id'" );
 		
+		$sig = 0;
 		foreach( $res as $v ) {
 			$d_id = decode_dev_id( $v['dev_id'] ) - 1;		// 设备在控制器内的id 
 			$cur_state = $st[$d_id];						// 最新设备状态
@@ -263,14 +264,16 @@
 			$con = "dev_id='".$v['dev_id']."'";
 			
 			$data = array();
-					
+						
 			switch( $cur_state ) {
 				case '0':
 					if( $dev_state==1 && $v['student_no']!='-1' && $v['ins']=='CLOSE' && $v['close_t']==0 )
 						$data['close_t'] = time();
 					
-					if( count($data)>0 )
+					if( count($data)>0 ) {
+						$sig = 1;
 						$db->update( 'devices_ctrl', $data, $con );
+					}
 					break;
 				
 				case '1':
@@ -283,8 +286,10 @@
 						}	
 					}
 					
-					if( count($data)>0 )
+					if( count($data)>0 ) {
+						$sig = 1;
 						$db->update( 'devices_ctrl', $data, $con );
+					}
 					break;
 			}
 		}
@@ -292,6 +297,11 @@
 		$case_stat[$dev_id]->st_arr = $case_stat[$dev_id]->cur_st_arr;
 		$case_stat[$dev_id]->cur_st_arr = array();
 		
+		// 如果数据库内数据被改动，需要重新读取数据
+		$db->free_result();
+		if( $sig==1 )
+			$res = $db->get_all( "SELECT * FROM devices_ctrl WHERE ctrl='$dev_id'" );
+
 		check_one_case( $res );
 		
 		$db->free_result();
@@ -368,7 +378,7 @@
 				// 根据 ctrl 查找 socket
 				$socket = search_sock_with_ctrl( $sock_ids, $v );
 				if( !empty($socket) ) {
-					echo "instruct - $buff    $ins\r\n";
+					echo "===========>instruct - $buff    $ins\r\n";
 					socket_write( $socket, $buff );
 				}
 			}
@@ -416,6 +426,8 @@
 					$con = "dev_id='".$v2['dev_id']."'";
 					$data = array('student_no'=>'-1','ins'=>'NONE','ins_recv_t'=>0,'ins_send_t'=>0,'open_t'=>0,'close_t'=>0,'break_t'=>0,'remark'=>'');
 					$db->update( 'devices_ctrl', $data, $con );
+					
+					continue;
 				}
 			}
 			
@@ -426,12 +438,12 @@
 		$need_ctrl = array_unique( $need_ctrl );
 		if( count($need_ctrl)>0 )  {						// 需要控制
 			foreach( $need_ctrl as $v ) {
-				$ins = strrev( implode('',$case[$v]) );
+				$ins = strrev( implode('',$case) );
 				$buff = sprintf( "[$v,2,%04XC]", bindec($ins) );
 				// 根据 ctrl 查找 socket
 				$socket = search_sock_with_ctrl( $sock_ids, $v );
 				if( !empty($socket) ) {
-					echo "instruct - $buff    $ins\r\n";
+					echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>>instruct - $buff    $ins\r\n";
 					socket_write( $socket, $buff );
 				}
 			}
@@ -500,6 +512,7 @@
 				break;
 			
 			default:
+				echo "....................$dev_state--".$rec['open_t'].'>>'.$rec['ins']."--".$rec['ins_send_t'].'--'.$rec['ins_recv_t'].'--'.$rec['open_t']."\r\n";
 				switch( $rec['ins'] ) {
 					case 'OPEN':
 						if( $dev_state==0 ) {									// 中断计时，首次开启功能，逻辑复杂
@@ -542,7 +555,7 @@
 							}
 						}
 						else {					// dev_state==1
-							if( (time()-$rec['open_t'])>=$rec['pre_close_t'] ) {	// 开启时间超过最大允许开启时间
+							if( $rec['open_t']>0 && (time()-$rec['open_t'])>=$rec['pre_close_t'] ) {	// 开启时间超过最大允许开启时间
 								$need_ctrl = 1;
 								$data = array( 'ins'=>'CLOSE', 'ins_recv_t'=>time(), 'ins_send_t'=>time() );
 								$db->update( 'devices_ctrl', $data, $con );

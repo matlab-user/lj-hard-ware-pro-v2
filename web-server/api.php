@@ -367,7 +367,7 @@
 			$now = 0;
 			
 			// 根据 device_id 获取设备是否可以使用，并且获得设备硬件控制id
-			$res = $this->db->get_all( "SELECT student_no, ins FROM devices_ctrl WHERE dev_locate='$device_id'" );
+			$res = $this->db->get_all( "SELECT * FROM devices_ctrl WHERE dev_locate='$device_id'" );
 			$res = $res[0];
 			
 			switch( $operate ) {
