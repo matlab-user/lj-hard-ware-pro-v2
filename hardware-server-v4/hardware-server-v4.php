@@ -1,9 +1,9 @@
 <?php
 /*
-	web端指令格式为：[websend,operate,dev_id]
+	web端指令格式为：[web,operate,dev_id]
 	其中，OPEN CLOSE操作已经事先写入数据库中
 	
-	收到web端指令，立即返回 [websend,GOT]
+	收到web端指令，立即返回 [web,GOT]
 */
 	require_once( 'config.php' );
 	require_once( 'net_pro.php' );
@@ -23,7 +23,7 @@
 	
 	class heart_beat {
 		public $st_arr;								// 之前的状态值,应该从数据库中确定状态，先默认为全关
-		public $cur_st_arr;										// 当前的状态值
+		public $cur_st_arr;							// 当前的状态值
 		public $recv_t = 0;
 		
 		public function __construct() {
@@ -75,12 +75,13 @@
 */	
     while( 1 ) {
 		
-		
 		$send_ins_dev_id = array();
 		
 		$read = gen_sock_chain( $sock_ids, $sock );
 		
         socket_select( $read, $write=NULL, $except=NULL, 5 );
+		
+		$s1 = microtime( true );
 		
         if( in_array($sock, $read) ) {
             $mid = new sock_info();
@@ -122,14 +123,13 @@
 							error_log( "case-".$sock_ids[$key]->id." was online at\t".date('Y-m-d H:i:s')."\r\n", 3, 'error_log.txt' );
 					}
 					
-					if( $one_client_order[0]->id=='web' ) {
+					if( $one_client_order[0]->id=='web' ) {		// 仅处理来自web的指令，真正命令发送在 后面的 check_db 函数  
 						$send_ins_dev_id[] = substr( $one_client_order[0]->dev_id, 0, 3 );	
 						$buff = "[web,GOT]";
 						socket_write( $read_sock, $buff );
 					}
-					else {
-						$sub_dev_ids = pro_ins( $one_client_order, $read_sock );
-						//$dev_ids = array_merge( $dev_ids, $sub_dev_ids );
+					else {		// 仅处理硬件事务，以控制箱为单位
+						pro_ins( $one_client_order[0], $read_sock );
 					}		
 					
 					unset( $one_client_order );	
@@ -143,8 +143,6 @@
 			}	
 		}	
 		
-		$s1 = microtime( true );
-		
 		// 主要处理web控制指令（实际发送控制指令）
 		$send_ins_dev_id = array_unique( $send_ins_dev_id );
 		echo "web ins: ".count($send_ins_dev_id)."\r\n";
@@ -153,29 +151,14 @@
 			$send_ins_dev_id = array_slice( $send_ins_dev_id, 0, 4 );
 		if( count($send_ins_dev_id)>0 )
 			check_db( $send_ins_dev_id );
-/*		
-		$dev_ids = array_unique( $dev_ids );
-		if( count($dev_ids)>5 )
-			$dev_ids = array_slice( $dev_ids, 0, 4 );
 		
-		if( $case_p==0 ) {
-			$db = new db( $config );
-			$sql_res = $db->get_all( 'SELECT DISTINCT ctrl FROM devices_ctrl' );
-			$db->close();
-		}	
-
-		$dev_ids[] = $sql_res[$case_p]['ctrl'];
-		$case_p++;
-		
-		if( $case_p>=count($sql_res) )
-			$case_p = 0;
-		
-*/
+		// 轮询除 web 控制外的其它控制箱
 		$mid = array_diff( $dev_ids, $send_ins_dev_id );
 		echo "rest cases: ".count($mid)."\r\n";
 		if( count($mid)>0 )
 			check_db( $mid );
 		
+		echo "case state num: ".count($case_stat)."\r\n";
 		echo "cost ".(microtime(true)-$s1)." s\r\n";
 		
 		// 检查清理 socket 超时（不操作数据库，不发送指令）

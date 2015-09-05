@@ -99,52 +99,52 @@
 		global $sock_ids, $case_stat;
 		
 		$ctrl_ids = array();
-		
-		foreach( $one_client_order as $k => $v ) {
-			
-			if( $v->id=='web' )
-				continue;
-				
-			// 处理来自硬件的反馈数据(指令反馈、心跳、读状态)
-			$buff = '';
-			switch($v->op) {
-				case '6':			// 设备心跳
-				case '3':			// 控制指令返回
-					if( !isset($case[$v->id]) )
-						$case_stat[$v->id] = new heart_beat();
-					
-					$state = substr( $v->state, 0, strlen($v->state)-1 );
-					$state = decbin( hexdec($state) );
-					$state = strrev( $state );
-									
-					$case_stat[$v->id]->cur_st_arr = str_split( $state );
-					$case_stat[$v->id]->recv_t = time();
+		$v = $one_client_order;
 
-					set_dev_state( $v->id );
-					//if( $v->id=='001' || $v->id=='012' )
-						//echo "\t\t".$v->id.'---------'.$v->state."\r\n";
-					break;
-				
-				case '0':			// 设备请求读状态,返回[id,1,xxxxC]
-					set_dev_state( $v->id );
-					$state = read_hw_state( $v->id );
-					$buff = "[".$v->id.",1,$state]";
-					break;
-				
-				case '4':			// 开箱异常,返回[ID,5,AAAAC]
-					$buff = "[".$v->id.",5,AAAAC]";
-					error_log( "\t\t\tcase-".$v->id." was opened at\t".date('Y-m-d H:i:s')."\r\n", 3, 'error_log.txt' );
-					break;
-				
-				default:
-					break;
-				
-				if( !empty($buff) )
-					try{
-						socket_write( $read_sock, $buff );
-					}
-					catch( Exception $e ) {}
-			}
+		if( $v->id=='web' )
+			continue;
+			
+		// 处理来自硬件的反馈数据(指令反馈、心跳、读状态)
+		if( $v->op=='6' || $v->op=='3' || $v->op=='0' || $v->op=='4' ) {
+			if( !isset($case_stat[$v->id]) )
+				$case_stat[$v->id] = new heart_beat();
+			
+			$state = substr( $v->state, 0, strlen($v->state)-1 );
+			$state = decbin( hexdec($state) );
+			$state = strrev( $state );
+							
+			$case_stat[$v->id]->cur_st_arr = str_split( $state );
+			$case_stat[$v->id]->recv_t = time();
+		}
+		
+		$buff = '';
+		switch($v->op) {
+			case '6':			// 设备心跳
+			case '3':			// 控制指令返回
+				set_dev_state( $v->id );
+				//if( $v->id=='001' || $v->id=='012' )
+					//echo "\t\t".$v->id.'---------'.$v->state."\r\n";
+				break;
+			
+			case '0':			// 设备请求读状态,返回[id,1,xxxxC]
+				set_dev_state( $v->id );
+				$state = read_hw_state( $v->id );
+				$buff = "[".$v->id.",1,$state]";
+				break;
+			
+			case '4':			// 开箱异常,返回[ID,5,AAAAC]
+				$buff = "[".$v->id.",5,AAAAC]";
+				error_log( "\t\t\tcase-".$v->id." was opened at\t".date('Y-m-d H:i:s')."\r\n", 3, 'error_log.txt' );
+				break;
+			
+			default:
+				break;
+			
+			if( !empty($buff) )
+				try{
+					socket_write( $read_sock, $buff );
+				}
+				catch( Exception $e ) {}
 		}
 
 		return $ctrl_ids;
@@ -268,7 +268,9 @@
 				case '0':
 					if( $dev_state==1 && $v['student_no']!='-1' && $v['ins']=='CLOSE' && $v['close_t']==0 )
 						$data['close_t'] = time();
-					$db->update( 'devices_ctrl', $data, $con );
+					
+					if( count($data)>0 )
+						$db->update( 'devices_ctrl', $data, $con );
 					break;
 				
 				case '1':
@@ -290,7 +292,7 @@
 		$case_stat[$dev_id]->st_arr = $case_stat[$dev_id]->cur_st_arr;
 		$case_stat[$dev_id]->cur_st_arr = array();
 		
-		check_db_2( $res );
+		check_one_case( $res );
 		
 		$db->free_result();
 		$db->close();
@@ -375,8 +377,9 @@
 		$db->close();
 	}
 	
+	// 仅处理一个箱子上的设备（16台）
 	// $dev_record - 一个箱子的上的所有设备信息记录
-	function check_db_2( $one_case_devs ) {
+	function check_one_case( $one_case_devs ) {
 		
 		global $config, $sock_ids, $case_stat;
 		
@@ -391,7 +394,7 @@
 
 		$need_ctrl = array();
 		
-		foreach( $one_case_devs as $v2 ) {			// 以ctrl为单位遍历设备
+		foreach( $one_case_devs as $v2 ) {
 				
 			$d_id = decode_dev_id( $v2['dev_id'] ) - 1;  // 设备在控制器上的id，从1开始编号，共16个
 		

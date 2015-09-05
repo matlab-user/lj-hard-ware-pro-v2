@@ -5,8 +5,8 @@
 	$config['dbhost'] = 'localhost'; 
 	
 	$config['dbuser'] = 'root';
-	$config['dbpwd'] = 'scgkapp';
-	//$config['dbpwd'] = 'blue';
+	//$config['dbpwd'] = 'scgkapp';
+	$config['dbpwd'] = 'blue';
 	
 	$config['database'] = 'yunkadb';
 ?>
