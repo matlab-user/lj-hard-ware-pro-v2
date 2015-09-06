@@ -421,7 +421,7 @@
 					
 					if( $msg!='' ) {
 						$str = '{ "resp_desc":"'.$msg.'","resp_code":"'.$resp_code.'","data":"{}"}';	
-						echo $str."\r\n";
+						echo $str;
 					}
 					break;
 			}
