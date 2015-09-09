@@ -677,7 +677,7 @@
 			if( is_array($data['data']) ) {
 				$data['data'] = $data['data']['list'];	
 			}
-			return $result;
+			return $data;
 		}
 
 		/*
@@ -690,7 +690,7 @@
 			$data = $this->http_post_json( 'tpdeposit', $post_data );
 			$sign = md5( $deposit_no.$summary.$trade_money.$school_id.$this->config['pay_token'] );
 			if( $data['resp_code']==0 ) {
-				$trade_money = number_format( (intval( $money)/100), 2 );
+				$trade_money = number_format( (intval($money)/100), 2 );
 				$summary = '充值' . $trade_money . '元';
 				$data['data'] = array(
 					'order_no'=>$deposit_no,
