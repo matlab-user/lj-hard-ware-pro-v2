@@ -125,12 +125,14 @@
 			// 在 devices_ctrl 表中获得 指定设备状态
 			$devices = array();
 			
-			$res = $this->db->get_all( 'SELECT student_no, dev_id, dev_locate, ins, dev_type FROM devices_ctrl WHERE '.$con );
+			$res = $this->db->get_all( 'SELECT student_no, dev_id, dev_locate, ins, dev_type, open_t FROM devices_ctrl WHERE '.$con );
 			foreach( $res as $v ) {
 				$building_info = $this->parse_device_by_device_id( $v['dev_locate'] );
 				$item['building'] = $this->config['build_map'][$building_info['building']];
 				$item['floor'] = $building_info['floor'];
 				$item['room'] = $building_info['room'];
+				
+				$item['lt'] = 0;
 				
 				if( $v['dev_type']=='shower' )
 					$item['deviceName'] = '淋浴房';
@@ -142,13 +144,26 @@
 				$item['deviceDesc'] = $item['building'].$building_info['device_desc'];
 				
 				$item['deviceStatus'] = 2;					// 被他人占用
-				if( $v['student_no']=='-1' ) {
-					if( $v['ins']=='NONE' )
+				if( $v['student_no']=='-1' || $v['ins']=='NONE' ) {
 						$item['deviceStatus'] = 0;			// 设备空闲
 				}
 				else {
-					if( $v['student_no']==$student_no )
-						$item['deviceStatus'] = 1;			// 设备被自己占用
+					if( $v['student_no']==$student_no ) {
+						if( $v['ins']=='OPEN' ) {
+							if( $v['open_t']>0 ) {
+								$item['deviceStatus'] = 1;			// 设备被自己占用(已开启)
+								$item['lt'] = time() - $v['open_t'];
+							}
+							else {
+								$item['deviceStatus'] = 4;			// 设备开启中
+							}
+						}
+						
+						if( $v['ins']=='CLOSE' ) {				// 设备关闭中
+							$item['deviceStatus'] = 3;
+							$item['lt'] = time() - $v['open_t'];
+						}
+					}
 				}
 				
 				$item['deviceType'] = $building_info['device_type'];
@@ -333,7 +348,8 @@
 
 		// 开淋浴房
 		// $device_id - 设备位置信息，不是设备硬件id
-		public function open_shower( $student_no, $device_id, $time, $delay_open, $delay_close, $token, $password='' ) {
+		public function open_shower( $student_no, $device_id, $time, $delay_open=0, $delay_close, $token, $password='' ) {
+			$begin_time = time() + $delay_open;
 			$this->operate_device_with_fee( $student_no, $device_id, 'OPEN', 0, $password, $token, $begin_time, $pre_end_time );
 		}
 		
@@ -376,6 +392,9 @@
 						case '-1':
 							// 写数据库(加上条件，保证合法抢占)，socket发送指令
 							$data = array( 'student_no'=>$student_no, 'ins'=>'OPEN', 'ins_recv_t'=>time() );
+							if( $begin_time>time() )
+								$data['ins_recv_t'] = $begin_time;
+								
 							$query = $this->db->update( 'devices_ctrl', $data, "dev_id='".$res['dev_id']."' AND student_no='-1'" );
 							break;
 						
@@ -394,7 +413,8 @@
 							echo '{ "resp_desc" : "'.$msg.'",
 									"resp_code" : "'.$resp_code.'",
 									"data"      : {}
-								 }';						 
+								 }';
+							return;
 							break;
 					}
 					break;
@@ -422,6 +442,7 @@
 					if( $msg!='' ) {
 						$str = '{ "resp_desc":"'.$msg.'","resp_code":"'.$resp_code.'","data":"{}"}';	
 						echo $str;
+						return;
 					}
 					break;
 			}

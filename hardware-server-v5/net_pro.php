@@ -476,26 +476,26 @@
 		$con = "dev_id='".$rec['dev_id']."'";
 		
 		switch( $rec['student_no'] ) {
-			case -1:
+			case '-1':
 				switch( $dev_state ) {
 					case 0:
-						$sig = empty($rec['remark']) || empty($rec['ins_recv_t']) || empty($rec['ins_send_t']) || empty($rec['open_t']) || empty($rec['close_t']);
+						$sig = !empty($rec['remark']) || !empty($rec['ins_recv_t']) || !empty($rec['ins_send_t']) || !empty($rec['open_t']) || !empty($rec['close_t']);
 						if( $sig==1 ) {
 							$data = array('remark'=>'', 'ins_recv_t'=>0, 'ins_send_t'=>0, 'open_t'=>0, 'close_t'=>0, 'ins'=>'NONE');
-							$db->update( 'devices_ctrl', $data, $con );
+							$db->update( 'devices_ctrl', $data, $con." AND student_no='-1'" );
 						}
 						break;
 						
 					case 1:
 						if( $rec['ins_recv_t']==0 ) {
 							$need_ctrl = 1;
-							$db->update( 'devices_ctrl', array('ins_recv_t'=>time(),'ins_send_t'=>time()), $con );
+							$db->update( 'devices_ctrl', array('ins'='CLOSE','ins_recv_t'=>time(),'ins_send_t'=>time()), $con );
 						}
 						else {
 							if( (time()-$rec['ins_recv_t'])<=$T_OUT ) {
 								if( (time()-$rec['ins_send_t'])>=5 ) {
 									$data = array( 'ins_send_t'=>time() );
-									$db->update( 'devices_ctrl', $data, $con );
+									$db->update( 'devices_ctrl', $data, $con." AND student_no='-1'" );
 									$need_ctrl = 1;
 								}
 							}
@@ -603,6 +603,12 @@
 								$db->update( 'devices_ctrl', $data, $con );
 							}
 						}
+						break;
+					
+					default:					// ins='NONE', student_no=-1
+						// 恢复设备至未占用状态(不清除remark， 也许有err信息)
+						$data = array('student_no'=>'-1','ins'=>'NONE','ins_recv_t'=>0,'ins_send_t'=>0,'open_t'=>0,'close_t'=>0,'break_t'=>0);
+						$db->update( 'devices_ctrl', $data, $con );
 						break;
 				}
 				break;

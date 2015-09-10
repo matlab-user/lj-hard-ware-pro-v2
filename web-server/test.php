@@ -4,7 +4,7 @@
 	//require_once( 'api.php' );
 		
 	//$api = new cardApi( $config );
-
+/*
 	//login
 	$str = '{"sign":"7b3233c9f22739adf77c9513a762858a467b233b","n":"153807","action":"login","stu_no":"201520152015","t":"20150902153807","password":"111111"}';
 	$request_result = http_post_json( $str );
@@ -24,7 +24,7 @@
 	$str = '{"sign":"74accf498f9fd695084b61b29a4d59b990f27fe7","page_index":"1","page_size":"10","begin_date":"20150908010101","end_date":"20150910010101","n":"153801","action":"getSubsidyList","stu_no":"201520152015","t":"20150902153801","token":"'.$token.'"}';
 	http_post_json( $str );
 	exit;
-	
+*/	
 /*
 {
   "action" : "getDeviceList",
@@ -88,7 +88,7 @@
 		
 	http_post_json( $str );
 	
-	sleep( 45 );
+	sleep( 10 );
 	echo "close the shower\r\n";
 	$str = '{
 	  "action" : "closeShower",
