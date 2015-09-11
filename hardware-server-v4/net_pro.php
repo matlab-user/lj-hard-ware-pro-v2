@@ -122,8 +122,9 @@
 			case '6':			// 设备心跳
 			case '3':			// 控制指令返回
 				set_dev_state( $v->id );
-				if( $v->id=='001' || $v->id=='012' )
-					echo "\t\t".$v->id.'---------'.$v->state."\r\n";
+				//if( $v->id=='001' || $v->id=='012' || $v->id=='019' )
+				if( rand(1,100)==1 )
+					echo "\t\t".$v->id.'-------'.$v->state.'   '.date('Y-m-d H:i:s')."\r\n";
 				break;
 			
 			case '0':			// 设备请求读状态,返回[id,1,xxxxC]
@@ -556,6 +557,11 @@
 								$data = array( 'ins'=>'CLOSE', 'ins_recv_t'=>time(), 'ins_send_t'=>time() );
 								$db->update( 'devices_ctrl', $data, $con );
 							}
+							
+							if( $rec['open_t']<=0 ) {
+								$data = array( 'open_t'=>time() );
+								$db->update( 'devices_ctrl', $data, $con );
+							}	
 						}
 						break;
 					

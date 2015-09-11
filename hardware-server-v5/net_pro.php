@@ -122,8 +122,9 @@
 			case '6':			// 设备心跳
 			case '3':			// 控制指令返回
 				set_dev_state( $v->id );
-				if( $v->id=='001' || $v->id=='012' )
-					echo "\t\t".$v->id.'---------'.$v->state."\r\n";
+				//if( $v->id=='001' || $v->id=='012' )
+				if( rand(1,100)==1 )
+					echo "\t\t".$v->id.'-------'.$v->state.'   '.date('Y-m-d H:i:s')."\r\n";
 				break;
 			
 			case '0':			// 设备请求读状态,返回[id,1,xxxxC]
@@ -375,7 +376,7 @@
 				// 根据 ctrl 查找 socket
 				$socket = search_sock_with_ctrl( $sock_ids, $v );
 				if( !empty($socket) ) {
-					echo "===========>".time()." instruct - $buff    $ins\r\n";
+					echo "===========>".date('Y-m-d H:i:s')."  instruct - $buff    $ins\r\n";
 					socket_write( $socket, $buff );
 				}
 			}
@@ -416,7 +417,7 @@
 					// 产生计费，当前指令为 OPEN，关闭时间为 time()-30(最长不能超过pre_close_t长度)；为CLOSE 关闭时间为指令接收时间
 					if( $v2['open_t']>0 && $v2['remark']!='gen_fee' ) {
 						gen_fee_record( $v2, 'fee-1' );
-						echo "\tfee-1: dev_id-".$v2['dev_id']."  open_t-".$v2['open_t']."  close_t-".(time()-30)."  ".time()."\r\n";
+						echo "\tfee-1: student_no-".$v2['student_no']."  dev_id-".$v2['dev_id']."  open_t-".$v2['open_t']."  close_t-".(time()-30)."  ".time()."\r\n";
 					}
 					
 					// 恢复设备至未占用状态
@@ -440,7 +441,7 @@
 				// 根据 ctrl 查找 socket
 				$socket = search_sock_with_ctrl( $sock_ids, $v );
 				if( !empty($socket) ) {
-					echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>>".time()."  instruct - $buff    $ins\r\n";
+					echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>>".date('Y-m-d H:i:s')."   instruct - $buff    $ins\r\n";
 					socket_write( $socket, $buff );
 				}
 			}
@@ -489,7 +490,7 @@
 					case 1:
 						if( $rec['ins_recv_t']==0 ) {
 							$need_ctrl = 1;
-							$db->update( 'devices_ctrl', array('ins'='CLOSE','ins_recv_t'=>time(),'ins_send_t'=>time()), $con );
+							$db->update( 'devices_ctrl', array('ins'=>'CLOSE','ins_recv_t'=>time(),'ins_send_t'=>time()), $con );
 						}
 						else {
 							if( (time()-$rec['ins_recv_t'])<=$T_OUT ) {
@@ -509,7 +510,6 @@
 				break;
 			
 			default:
-				//echo "....................$dev_state--".$rec['open_t'].'>>'.$rec['ins']."--".$rec['ins_send_t'].'--'.$rec['ins_recv_t'].'--'.$rec['open_t']."\r\n";
 				switch( $rec['ins'] ) {
 					case 'OPEN':
 						if( time()<$rec['ins_recv_t'] )			// 延时指令，时间未到时，不处理
@@ -543,7 +543,7 @@
 										// 产生计费 关闭时间为 close_t
 										if( $rec['open_t']>0 ) {
 											gen_fee_record( $rec, 'fee-2' );
-											echo "\tfee-2: dev_id-".$rec['dev_id']."  open_t-".$rec['open_t']."  close_t-".$rec['close_t']."  ".time()."\r\n";
+											echo "\tfee-2: student_no-".$rec['student_no']."  dev_id-".$rec['dev_id']."  open_t-".$rec['open_t']."  close_t-".$rec['close_t']."  ".time()."\r\n";
 										}
 										
 										// 恢复设备至未占用状态
@@ -560,6 +560,11 @@
 								$data = array( 'ins'=>'CLOSE', 'ins_recv_t'=>time(), 'ins_send_t'=>time() );
 								$db->update( 'devices_ctrl', $data, $con );
 							}
+							
+							if( $rec['open_t']<=0 ) {
+								$data = array( 'open_t'=>time() );
+								$db->update( 'devices_ctrl', $data, $con );
+							}	
 						}
 						break;
 					
@@ -570,7 +575,7 @@
 							// 仅处理硬件设备正常连接时的费用处理
 							if( (time()-$state_recv_t)<30 && $rec['open_t']>0 && $rec['remark']!='gen_fee' ) {
 								gen_fee_record( $rec, 'fee-3' );
-								echo "\t\tfee-3: dev_id-".$rec['dev_id']."  open_t-".$rec['open_t']."  close_t-".$rec['close_t']."\r\n";
+								echo "\t\tfee-3: student_no-".$rec['student_no']."  dev_id-".$rec['dev_id']."  open_t-".$rec['open_t']."  close_t-".$rec['close_t']."\r\n";
 							}
 							
 							// 恢复设备至未占用状态
@@ -587,7 +592,7 @@
 									$db->update( 'devices_ctrl', $data, $con );
 									
 									gen_fee_record( $rec, 'fee-4' );
-									echo "\t\tfee-4: dev_id-".$rec['dev_id']."  ins_recv_t-".$rec['ins_recv_t']."  open_t-".$rec['open_t']."  close_t-".$rec['ins_recv_t']."\r\n";	
+									echo "\t\tfee-4: student_no-".$rec['student_no']."  dev_id-".$rec['dev_id']."  ins_recv_t-".$rec['ins_recv_t']."  open_t-".$rec['open_t']."  close_t-".$rec['ins_recv_t']."\r\n";	
 							}
 								
 							if( (time()-$rec['ins_recv_t'])<=$T_OUT ) {

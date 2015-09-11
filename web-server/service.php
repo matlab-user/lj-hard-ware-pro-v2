@@ -99,7 +99,7 @@
 		
 		case 'editUserInfo':
 			$token = $post['token'];
-			$api->edit_user_info( $student_no,$post,$token );
+			$api->edit_user_info( $student_no, $post, $token );
 			break;
 		
 		case 'getUserInfo':
@@ -184,7 +184,8 @@
 			$token = $post['token'];
 			$money = $post['money'];
 			$name = $post['name'];
-			$api->recharge( $student_no, $token, $password, $money, $name );
+			$type = $post['type'];
+			$api->recharge( $student_no, $token, $password, $money, $name, $type );
 			break;
 		
 		case 'trade':

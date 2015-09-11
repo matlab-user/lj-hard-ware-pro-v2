@@ -4,12 +4,12 @@
 	//require_once( 'api.php' );
 		
 	//$api = new cardApi( $config );
-/*
-	//login
+
+	// login
 	$str = '{"sign":"7b3233c9f22739adf77c9513a762858a467b233b","n":"153807","action":"login","stu_no":"201520152015","t":"20150902153807","password":"111111"}';
 	$request_result = http_post_json( $str );
 	
-
+/*
 	$str2 = substr( $request_result[1], 3 );
 	$data = json_decode( $str2 );
 
@@ -25,6 +25,22 @@
 	http_post_json( $str );
 	exit;
 */	
+
+/*
+$str = '{"action":"buyElect","password":"111111","t":"1441952445","room":"101","studentNo":"201520152015","tradeMoney":"100","loudongId":"51","n":"ccd824","sign":"466c2b97885dcc817aa13157be60d8e557277115","token":"ded0JwAuWKeJVpEDf06wRa4qOxfPfzi5Sv67LLMb+xR8SOyMYTva/i6rF0nluwDnyZGX1yk5t/pi5HD6TS38L7RcWTm/JRP40IGqHz8QxACWVpcrSmu7YiKk/ovhnjZazw"}';
+http_post_json( $str );
+exit;
+*/
+
+	$str = '{"stu_no":"201520152015","password":"111111","t":"1441953848","action":"recharge","token":"9bcesO7F8cJnDcPFPhRIqb6r4HwXAfSYNgn1X4o7JNjt44Y/+QDxNQUCE1MzHvW98BI0DxzsnS7NdQaQB0A5YA2mUpZrOxtECq9HMlVXJ0VM9AMskqsUMWNgWQMTlp6j8Q","n":"3ca185","sign":"d9458159794d47b94f39ec4949adbb58ff385b58","money":1,"name":"测试人员"}';
+	http_post_json( $str );
+	exit;
+
+/*
+$str = '{"stu_no":"201527050080","password":"300447","t":"1441953848","action":"handLost","token":"9HM","n":"3ca185","sign":"d947b949adbb58"}';
+http_post_json( $str );
+exit;
+*/
 /*
 {
   "action" : "getDeviceList",

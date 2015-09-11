@@ -56,8 +56,7 @@
 	
 	$case_p = 0;
 	$case_stat = array();
-	
-	
+		
 	$dev_ids = array();			// 记录接收到的所有控制指令涉及的控制板id
 	$db = new db( $config );
 	$sql_res = $db->get_all( 'SELECT DISTINCT ctrl FROM devices_ctrl' );
@@ -150,7 +149,7 @@
 		if( count($mid)>0 )
 			check_db( $mid );	
 
-		if( (microtime(true)-$s1)>0 ) {
+		if( (microtime(true)-$s1)>0.6 ) {
 			echo "cost ".(microtime(true)-$s1)." s\r\n";
 			echo "case state num: ".count($case_stat)."\r\n";
 		}
