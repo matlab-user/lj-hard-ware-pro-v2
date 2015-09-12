@@ -15,10 +15,7 @@
 	$config['echostr'] = '权限验证来源';
 
 	$config['dbhost'] = 'localhost'; 											// 数据库主机
-	//$config['dbuser'] = 'yunkauser';
-	//$config['dbpwd'] = 'KKBBtS7ynWJnPnWm';
-	
-	$config['dbuser'] = 'root'; 											// 数据库用户名
+	$config['dbuser'] = 'root'; 												// 数据库用户名
 	$config['dbpwd'] = 'scgkapp'; 												// 数据库用户名密码
 	//$config['dbpwd'] = 'blue';
 	$config['database'] = 'yunkadb'; 											// 数据库名
@@ -39,4 +36,6 @@ $config["carrier_account"]='[{
 $config["debug"] = false;
 $config["branch_id"] = "40002";//付费的设备ID
 $config["hx_auth_key"] = "C27AFF893F2207A4A8DAC4D708B0D60B";//token明文传输的时候的加密秘钥
+
+$config['pay_token'] = '0123456789ABCDEF';
 ?>

@@ -1,2 +1,7 @@
 配置 curl 环境
 sudo apt-get install curl libcurl3 libcurl3-dev php5-curl
+
+
+hardware-server-v5   增加延时开启功能
+
+hardware-server-v6   增加延时开启和关闭功能

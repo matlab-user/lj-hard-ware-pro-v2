@@ -9,13 +9,13 @@
 	$str = '{"sign":"7b3233c9f22739adf77c9513a762858a467b233b","n":"153807","action":"login","stu_no":"201520152015","t":"20150902153807","password":"111111"}';
 	$request_result = http_post_json( $str );
 	
-/*
-	$str2 = substr( $request_result[1], 3 );
-	$data = json_decode( $str2 );
 
-	$token = $data->stoken;
-	echo "$token\r\n";
-	
+	//$str2 = substr( $request_result[1], 3 );
+	//$data = json_decode( $str2 );
+
+	//$token = $data->stoken;
+	//echo "$token\r\n";
+	/*
 	// getDeviceList
 	//$str = '{"sign":"74accf498f9fd695084b61b29a4d59b990f27fe7","n":"153801","action":"getDeviceList","stu_no":"201520152015","t":"20150902153801","token":"20152015201511D1C0D64AA326B9CC95B76FC7A1DA67"}';
 	//http_post_json( $str );
@@ -32,7 +32,10 @@ http_post_json( $str );
 exit;
 */
 
-	$str = '{"stu_no":"201520152015","password":"111111","t":"1441953848","action":"recharge","token":"9bcesO7F8cJnDcPFPhRIqb6r4HwXAfSYNgn1X4o7JNjt44Y/+QDxNQUCE1MzHvW98BI0DxzsnS7NdQaQB0A5YA2mUpZrOxtECq9HMlVXJ0VM9AMskqsUMWNgWQMTlp6j8Q","n":"3ca185","sign":"d9458159794d47b94f39ec4949adbb58ff385b58","money":1,"name":"测试人员"}';
+//	$str = '{"stu_no":"201520152015","password":"111111","t":"1441953848","action":"recharge","token":"9bcesO7F8cJnDcPFPhRIqb6r4HwXAfSYNgn1X4o7JNjt44Y/+QDxNQUCE1MzHvW98BI0DxzsnS7NdQaQB0A5YA2mUpZrOxtECq9HMlVXJ0VM9AMskqsUMWNgWQMTlp6j8Q","n":"3ca185","sign":"d9458159794d47b94f39ec4949adbb58ff385b58","money":1,"name":"测试人员"}';
+//	$str = '{"sign":"7b3233c9f22739adf77c9513a762858a467b233b","begin_date":"20150801000000","page_index":1,"end_date":"20150831235959","page_size":20,"n":"153807","action":"getCardTransaction","stu_no":"201520152015","t":"20150902153807","password":"111111"}';
+//	$str = '{"action":"editUserInfo","stu_no":"201520152015","t":"1442027929","wash_setting":"{\"delay_close\":80,\"delay_time\":10}","n":"e6b4c7","sign":"df3e8ddc442ac4049afde055af1722d23f554617","token":"f27adzAPDiPuql7Tq9uk/qD6ENtId0+xPer1zMYjpmaKOUZr8FQl6TvAPZiFwa4i6c1nwFoSthwLIpEgQ1IXkT9hk968GrJfwuP+niQi/n9rTsi8iSK8E+UjiazO4E3dOw"}';
+	$str='{"password":"111111","new_password":"222222","stu_no":"201520152015","sign":"74accf498f9fd695084b61b29a4d59b990f27fe7","n":"153801","action":"changePassword","t":"20150902153801","token":"20152015201511D1C0D64AA326B9CC95B76FC7A1DA67"}';
 	http_post_json( $str );
 	exit;
 
