@@ -37,5 +37,6 @@ $config["debug"] = false;
 $config["branch_id"] = "40002";//付费的设备ID
 $config["hx_auth_key"] = "C27AFF893F2207A4A8DAC4D708B0D60B";//token明文传输的时候的加密秘钥
 
-$config['pay_token'] = '0123456789ABCDEF';
+$config['pay_token'] = 'zhaxpaycgi';
+$config['pay_school_id'] = '02230';
 ?>
