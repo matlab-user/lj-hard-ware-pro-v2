@@ -1,34 +1,40 @@
 <?php
+
+	header( 'Content-type:text/html;charset=utf-8' );
+	
 	require_once( 'db.php' );
 	require_once( 'config.php' );
-	
-	if( !isset($_POST['order_no']) || !isset($_POST['amount']) || !isset($_POST['school_code']) || !isset($_POST['sign']) )
-		exit;
-	 
-	// count MD5
-	$mid = $_POST['order_no'] . $_POST['amount'] . $config['pay_token'];
-	$mid = md5( $mid );
 
-	if( $mid==$_POST['sign'] ) {
+	if( !isset($_POST['json']) || !isset($_POST['signature']) ) {
+		echo 'result=data invalid';
+		exit;
+	}
+
+	$post_str = $_POST['json'];
+	//$post_str = '{"summary":"0.01","amt":"0.01","name":"\u6D4B\u8BD5\u5E10\u62372","school_account":"201520152015","order_no":"201520152015201509131846314782"}';
+	$post = json_decode( $post_str, true );
+	
+	if( !isset($post['order_no']) || !isset($post['amt']) ) {
+		echo 'result=lack data';
+		exit;
+	}
+	
+	// count MD5
+	$mid = $post_str . $config['pay_token'];
+	$mid2 = md5( $mid );
+
+	if( $mid2==$_POST['signature'] ) {
 		$db = new db( $config );
 	
-		$data['order_no'] = $_POST['order_no'];
-		$data['amount'] = $_POST['amount'];
-		$data['school_code'] = $_POST['school_code'];
-		$data['sign_str'] = $_POST['sign'];
-		$data['summary'] = $_POST['summary'];
-		$data['name'] = $_POST['name'];
-		$data['stu_no'] = $_POST['school_account'];
-		$data['recv_t'] = time();
-				
-		$db->insert( 'hpay_table', $data );
+		$data['recv_t'] = time();		
+		$db->update( 'hpay_table', $data, "order_no='".$post['order_no']."'" );
 		
 		// 调用一卡通转账
-		$row = $db->get_one( "SELECT card_token,password FROM user_info WHERE studentNo='".$data['stu_no']."' LIMIT 1" );
+		$row = $db->get_one( "SELECT card_token, password FROM user_info WHERE studentNo='".$post['school_account']."' LIMIT 1" );
 		$token = $row['card_token'];
 		$password = $row['password'];
 		
-		$post_data = json_encode( array('body'=>array('studentNo'=>$data['stu_no'],'token'=>$token,'password'=>$password,'depositNo'=>$data['order_no'],'depositMoney'=>$data['amount'],'schoolId'=>$data['school_code'])) );
+		$post_data = json_encode( array('body'=>array('studentNo'=>$post['school_account'],'token'=>$token,'password'=>$password,'depositNo'=>$post['order_no'],'depositMoney'=>$post['amt']*100,'schoolId'=>$config['school_id'])) );
 		$res = http_post_json( 'tpdeposit', $post_data );
 		
 		// 在数据库中标记，此单已转
@@ -38,12 +44,15 @@
 			$data2['pay_t'] = time();
 			
 			$db->free_result();
-			$db->update( 'hpay_table', $data2, "order_no='".$data['order_no']."' AND if_pay=0" );
+			$db->update( 'hpay_table', $data2, "order_no='".$post['order_no']."' AND if_pay=0" );
 		}
-		
-		$db->close();
+			
+		echo 'result=00';
 	}
-	
+	else {
+		echo 'result=data sign is wrong';
+	}
+
 //--------------------------------------------------------------------------------------
 	function http_post_json( $key, $jsonStr ) {
 		

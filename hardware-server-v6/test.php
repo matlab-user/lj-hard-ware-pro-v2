@@ -2,9 +2,26 @@
 
 	require_once( 'config.php' );
 	require_once( 'db.php' );
-		
-	$db = new db( $config );
 	
+	$config['pay_token'] = 'zhaxpaycgi';
+	
+	//$db = new db( $config );
+	$str = '201520152015201509131846314782+0.01'.'+'.$config['pay_token'];
+	echo md5( $str )."\r\n";
+	exit;
+	
+	// MD5(订单号 + 摘要 + 金额 + 学校编号 + 签名KEY)
+/*	
+	$json = '{"summary":"50.00","amt":"50.0","name":"\u6D4B\u8BD5\u5E10\u62372","school_account":"201520152015","order_no":"201520152015201509131547418931"}';
+	$signature = '3d3a9f25feb46ad5720355e0ac1f27da';
+	$j = json_decode( $json, true );
+	
+	$str = $j['order_no'].$j['amt'].$config['pay_token'];
+	echo $str.'     '.md5( $str )."\r\n";
+	exit;
+*/	
+
+/*	
 	echo "open device  ".date("Y-m-d H:i:s").'              '.time()."\r\n";
 	$data['student_no'] = '210520152015';
 	$data['ins'] = 'OPEN';
@@ -16,11 +33,16 @@
 	$data['ins'] = 'CLOSE';
 	$data['ins_recv_t'] = time() + 14;
 	$db->update( 'devices_ctrl', $data, "dev_id=00101" );
-	exit;
-	
+	exit;	
+*/
+
 	// login
-	$str = '{"sign":"7b3233c9f22739adf77c9513a762858a467b233b","n":"153807","action":"login","stu_no":"201520152015","t":"20150902153807","password":"111111"}';
+	$str = '{"sign":"7b3233c9f22739adf77c9513a762858a467b233b","n":"153807","action":"login","stu_no":"201520152015","t":"20150902153807","password":"333333"}';
 	$request_result = http_post_json( $str );
+	
+	$str = '{"sign":"7b3233c9f22739adf77c9513a762858a467b233b","n":"153807","action":"getCardTransaction","stu_no":"201520152015","t":"20150902153807","page_index":"1","page_szie":"10","begin_date":"20150204010101","end_date":"20150211010101","type":"zhichu"}';
+	$request_result = http_post_json( $str );
+	exit;
 	
 	$str = '{
 			  "action" : "openShower",
@@ -36,7 +58,7 @@
 			}';
 
 	http_post_json( $str );
-	
+
 	sleep( 10 );
 	echo "close the shower\r\n";
 	$str = '{
