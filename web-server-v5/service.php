@@ -50,7 +50,7 @@
 		$ta = array( $config['token'], $post['t'], $post['n'] );
 		$ta = md5( implode($ta) );
 		$sign = sha1( $ta );
-/*		
+		
 		if( $sign!=$post['sign'] ) {
 			echo '{
 					"resp_desc" : "鉴权失败",
@@ -59,7 +59,6 @@
 				}';		
 			exit;
 		}
-*/
 	}
 
 	$student_no = $post['stu_no'];
@@ -134,11 +133,6 @@
 			$time = $post['time'];								//分钟
 			$token = $post['token'];
 			$delay_open = $post['delay_open'];
-			$delay_close = $post['time'];
-
-			$log = new logger();
-			$log->write( $post['time'], 'openShower-delay_close' ); 
-
 			$api->open_shower( $student_no, $device_id, $time, $delay_open, $delay_close );
 			break;
 		

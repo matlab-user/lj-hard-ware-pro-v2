@@ -387,11 +387,20 @@
 		public function open_shower( $student_no, $device_id, $time, $delay_open=0, $delay_close=1800, $token, $password='' ) {
 			$begin_time = time() + $delay_open;
 			
-			if( $delay_close>0 )
-				$pre_end_time = $delay_close;
-			else 
+			$row = $this->db->get_one( " SELECT wash_setting FROM user_info WHERE studentNo='$student_no'" );
+			if( empty($row) )
 				$pre_end_time= 1800;
-
+			else {
+				$res = json_decode( $row['wash_setting'] );
+				if( $res && !empty($res['delay_close']) ) {
+					$pre_end_time = intval( $res['delay_close'] );
+				}
+				else 
+					$pre_end_time = 1800;
+			}		
+			$log = new logger();
+			$log->write( $pre_end_time, 'open_shower_delay_close' );
+			
 			$this->operate_device_with_fee( $student_no, $device_id, 'OPEN', 0, $password, $token, $begin_time, $pre_end_time );
 		}
 		// 关淋浴房
@@ -422,6 +431,15 @@
 			$query = FALSE;
 			$resp_code = 0;
 			$now = 0;
+			
+			$res = $this->db->get_one( "SELECT cardBalance FROM user_info WHERE studentNo='$student_no'" );
+			if( $res['cardBalance']<1 ) {
+				echo '{ "resp_desc" : "卡中余额低于1元，开启失败",
+					"resp_code" : "1",
+					"data"      : {}
+				 }';
+				return;	
+			}
 			
 			// 根据 device_id 获取设备是否可以使用，并且获得设备硬件控制id
 			$res = $this->db->get_all( "SELECT * FROM devices_ctrl WHERE dev_locate='$device_id'" );
@@ -467,9 +485,17 @@
 						}
 						elseif( $res['student_no']==$student_no ) {						// 自己开的设备，自己关掉
 							$now = time();
-							$data = array( 'ins'=>'CLOSE', 'ins_recv_t'=>$now );
-							$query = $this->db->update( 'devices_ctrl', $data, "dev_id='".$res['dev_id']."' AND student_no='$student_no'" );
-							// 如数据库写入成功，则开始计费
+							if( $res['ins']=='OPEN' ) {
+								$data = array( 'ins'=>'CLOSE', 'ins_recv_t'=>$now );
+								$query = $this->db->update( 'devices_ctrl', $data, "dev_id='".$res['dev_id']."' AND student_no='$student_no'" );
+								// 如数据库写入成功，则开始计费
+							}
+							else {
+								$sum_t = round( ($res['ins_recv_t']-$res['break_t']-$res['open_t'])/60, 2 );
+								$fee = round( $sum_t*$res['price']/100, 2 );
+								$msg = '设备关闭中，账单稍后生成。此次约耗时'.$sum_t.'秒,花费'.$fee.'元';
+								$resp_code = 1;
+							}
 						}
 						else {
 							$msg = '设备正被别人占用';

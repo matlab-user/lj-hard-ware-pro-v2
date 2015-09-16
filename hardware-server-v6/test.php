@@ -64,13 +64,13 @@
 
 	http_post_json( $str );
 
-	sleep( 8 );
+	sleep( 17 );
 	echo "close the shower\r\n";
 	$str = '{
 	  "action" : "closeShower",
 	  "stu_no" : "201520152015",
 	  "t" : "1440489421",
-	  "device_id" : "J61021",
+	  "device_id" : "J61051",
 	  "time" : 300,
 	  "delay_close" : "0",
 	  "delay_open" : 0,
