@@ -16,16 +16,16 @@
 	//防止非法篡改学号和token
 	if( $action!='login' ) {
 		
-		//$post['token'] = str_replace( " ", "+", $post['token'] );
+		$post['token'] = str_replace( " ", "+", $post['token'] );
 	
 		//authcode 的 加密 在 login方法里面，验证了一卡通的账号有效性后实现
-		//$authcode = $api->authcode( $post['token'], 'HX_DECODE', $config['hx_auth_key'] );
+		$authcode = $api->authcode( $post['token'], 'HX_DECODE', $config['hx_auth_key'] );
 	
 		//authcode的组合规则 stu_no|>|password|>|token	
-		//$auth = explode( "|>|", $authcode );
-		//$stu_no = $auth[0];
-		//$password = $auth[1];
-		//$token = $auth[2];
+		$auth = explode( "|>|", $authcode );
+		$stu_no = $auth[0];
+		$password = $auth[1];
+		$token = $auth[2];
 /*	
 		if( $stu_no!=$post['stu_no'] ) {
 			echo '{
@@ -37,7 +37,7 @@
 		}
 */		
 		//$post['stu_no'] = $stu_no;
-		//$post['password'] = $password;
+		$post['password'] = $password;
 		//$post['token'] = $token;
 	}
 	else {							// login 进行 sign 验证
@@ -45,7 +45,7 @@
 		$ta = array( $config['token'], $post['t'], $post['n'] );
 		$ta = md5( implode($ta) );
 		$sign = sha1( $ta );
-		
+/*		
 		if( $sign!=$post['sign'] ) {
 			echo '{
 					"resp_desc" : "鉴权失败",
@@ -54,11 +54,12 @@
 				}';		
 			exit;
 		}
+*/
 	}
 
 	$student_no = $post['stu_no'];
 	$password = $post['password'];
-	
+				
 	switch( $action ) {
 		case 'login':
 			$student_password = $post['password'];
@@ -88,7 +89,13 @@
 		
 		case 'getVersionInfo':
 			$api->get_version_info();
-			$os=$post['os'];
+			break;
+		
+		case 'changePassword':
+			$token = $post['token'];
+			$password = $post['token'];
+			$new_password = $post['token'];		
+			$api->change_password( $student_no, $password, $new_password );
 			break;
 		
 		case 'editUserInfo':
@@ -155,13 +162,7 @@
 			$page_size = $post['page_size'];
 			$begin_date = $post['begin_date'];
 			$end_date = $post['end_date'];
-			$type = $post['type'];
-				
-			if( $type=="chongru" )
-				$api->get_subsidy_list( $student_no, $token, $page_index, $page_size, $begin_date, $end_date );
-			else
-				$api->get_card_transaction( $student_no, $token, $page_index, $page_size, $begin_date, $end_date );
-			
+			$api->get_card_transaction( $student_no, $token, $page_index, $page_size, $begin_date, $end_date );
 			break;
 		
 		case 'handLost':
@@ -184,8 +185,7 @@
 			$token = $post['token'];
 			$money = $post['money'];
 			$name = $post['name'];
-			$type = $post['type'];
-			$api->recharge( $student_no, $token, $password, $money, $name, $type );
+			$api->recharge( $student_no, $token, $password, $money, $name );
 			break;
 		
 		case 'trade':
@@ -194,42 +194,34 @@
 			$trade_money = $post['fee'];
 			$api->trade( $student_no, $token, $password, $trade_branch_id,  $trade_money );
 			break;
-
 		case 'readLoudongInfo':
-			$room=array();
-			for($i=1;$i<=7;$i++){
-				for($j=1;$j<=26;$j++)
-				$room[]=$i.str_pad($j,2,'0',STR_PAD_LEFT);
-			}
-			$resopnse=array("resp_code"=>'0',"data"=>array(array("loudong"=>"骄子6栋","room"=>$room)));
-			echo json_encode($resopnse);
-			break;
-
-		case "buyElect":
-			$student_no=$post["studentNo"];
-			$room=$post["room"];
-			$loudongId=$post["loudongId"];
-			$password=$post["password"];
-			$tradeMoney=$post["tradeMoney"];
-			$api->buyElect($student_no, $room, $loudongId, $password,$tradeMoney);
-			break;
-
-		case "readElect":
-			$room=$post["room"];
-			$loudongId=$post["loudongId"];
-			$api->readElect($room,$loudongId);
-			break;
-			
-		case "changePassword":
-			//$db = new db( $config );
-			//$str=json_encode($post);
-			//$d['carrier_account'] = $str;
-			//$db->update( 'user_info', $d, "studentNo='201520152015'" );
-			
-			$oldPassword=$post['password'];
-			$newPassword=$post['new_password'];
-			$api->changePassword( $student_no, $oldPassword, $newPassword );
-			break;
-
-		}
+			echo "{
+    "resp_code": "0",
+    "data": {
+        "loudong": [
+            {
+                "51": "101"
+            },
+            {
+                "51": "2"
+            },
+            {
+                "51": "103"
+            },
+            {
+                "51": "104"
+            },
+            {
+                "51": "105"
+            },
+            {
+                "51": "106"
+            },
+            {
+                "51": "726"
+            }
+        ]
+    }
+}"
+	}
 ?>

@@ -3,6 +3,8 @@
 	
 	require_once( 'config.php' );
 	require_once( 'api.php' );
+	require_once('logger.php');
+	
 	$api = new cardApi( $config );
 	
 	$str = file_get_contents( 'php://input' );
@@ -12,6 +14,9 @@
 	$api->interface_valid( $post );
 	
 	$action = $post['action'];
+	
+//	$log = new logger();
+//	$log->write( $post['delay_close'].' '.$delay_close, 'openShower-delay_close' ); 
 		
 	//防止非法篡改学号和token
 	if( $action!='login' ) {
@@ -45,7 +50,7 @@
 		$ta = array( $config['token'], $post['t'], $post['n'] );
 		$ta = md5( implode($ta) );
 		$sign = sha1( $ta );
-		
+/*		
 		if( $sign!=$post['sign'] ) {
 			echo '{
 					"resp_desc" : "鉴权失败",
@@ -54,6 +59,7 @@
 				}';		
 			exit;
 		}
+*/
 	}
 
 	$student_no = $post['stu_no'];
@@ -92,6 +98,8 @@
 			break;
 		
 		case 'editUserInfo':
+			$log = new logger();
+			$log->write( json_encode($post), 'editUserInfo--service' );
 			$token = $post['token'];
 			$api->edit_user_info( $student_no,$post,$token );
 			break;
@@ -126,7 +134,7 @@
 			$time = $post['time'];								//分钟
 			$token = $post['token'];
 			$delay_open = $post['delay_open'];
-			$delay_close = $post['delay_close'];
+			$delay_close = $post['delay_close'];		
 			$api->open_shower( $student_no, $device_id, $time, $delay_open, $delay_close );
 			break;
 		
@@ -156,11 +164,18 @@
 			$begin_date = $post['begin_date'];
 			$end_date = $post['end_date'];
 			$type = $post['type'];
-				
-			if( $type=="chongru" )
+			$log = new logger();
+			
+			$log->write("input post=" . json_encode($post), 'test');
+			
+			if($type == "chongru")
 				$api->get_subsidy_list( $student_no, $token, $page_index, $page_size, $begin_date, $end_date );
-			else
+			else if($type == "zhichu")
 				$api->get_card_transaction( $student_no, $token, $page_index, $page_size, $begin_date, $end_date );
+			else {
+				
+				$log->write('no type', 'test');
+			}
 			
 			break;
 		
@@ -221,15 +236,12 @@
 			break;
 			
 		case "changePassword":
-			//$db = new db( $config );
-			//$str=json_encode($post);
-			//$d['carrier_account'] = $str;
-			//$db->update( 'user_info', $d, "studentNo='201520152015'" );
-			
+			$log = new logger();
+			$log->write( json_encode($post), 'CP-------SERVICE' );
+	
 			$oldPassword=$post['password'];
 			$newPassword=$post['new_password'];
 			$api->changePassword( $student_no, $oldPassword, $newPassword );
 			break;
-
 		}
 ?>

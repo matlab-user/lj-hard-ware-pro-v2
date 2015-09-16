@@ -15,7 +15,10 @@
 	$config['echostr'] = '权限验证来源';
 
 	$config['dbhost'] = 'localhost'; 											// 数据库主机
-	$config['dbuser'] = 'root'; 												// 数据库用户名
+	//$config['dbuser'] = 'yunkauser';
+	//$config['dbpwd'] = 'KKBBtS7ynWJnPnWm';
+	
+	$config['dbuser'] = 'root'; 											// 数据库用户名
 	$config['dbpwd'] = 'scgkapp'; 												// 数据库用户名密码
 	//$config['dbpwd'] = 'blue';
 	$config['database'] = 'yunkadb'; 											// 数据库名
@@ -23,7 +26,7 @@
 $config["build_map"] = array("J"=>"娇子","H"=>"鸿儒");
 $config["build_device_name"] = array("1"=>"热水器","2"=>"洗衣机","3"=>"公用设备");
 //$config["build_device_type"] = array("1"=>"1","2"=>"1","A"=>"2","3"=>"3");
-$config["build_device_icon"] = array("1"=>"http://10.71.29.51/card/images/shower.png","3"=>"http://10.71.29.51/card/images/shower.png","2"=>"http://10.71.29.51/card/images/washer.png");
+$config["build_device_icon"] = array("1"=>"http://yuncard.wingpass.cn:50000/images/shower.png","3"=>"http://yuncard.wingpass.cn:50000/images/shower.png","2"=>"http://yuncard.wingpass.cn:50000/images/washer.png");
 //$config["debug"] = true;
 $config["token_invaild"] = "1666";//登录失败的错误码
 $config["token_invaild_str"] = "登录令牌无效";//登录失败的定位码
@@ -38,4 +41,5 @@ $config["branch_id"] = "40002";//付费的设备ID
 $config["hx_auth_key"] = "C27AFF893F2207A4A8DAC4D708B0D60B";//token明文传输的时候的加密秘钥
 
 $config['pay_token'] = 'zhaxpaycgi';
+$config['pay_school_id'] = '02230';
 ?>

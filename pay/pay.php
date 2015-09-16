@@ -3,10 +3,9 @@
 	require_once( 'config.php' );
 	require_once( 'db.php' );
 	require_once( 'pay_api.php' );
-	
-	
+
 	$api = new payapi( $config );
-	
+
 	while( 1 ) {
 		// 查询 fee_record 中未支付的账单 
 		$res = $api->get_unpay_fee();
@@ -14,16 +13,18 @@
 		
 		foreach( $res as $v ) {
 			$password = $api->get_stu_password( $v['student_no'] );
+			$api->get_token_from_database( $v['student_no'] );
+			//echo $api->pay_token."\r\n";
 			//$api->signInAndGetUser( $v['student_no'], $password );			// 获取 student_no 的一卡通token， 存于$api->pay_token
 			//echo $api->pay_token."\t$password"."\r\n";
-			echo $password."\r\n";
-/*	
+			
+
 			// 通过一卡通支付
-			// 0400002   电控对接
-			// 0400003   控水对接
+			// 0400002   控水对接
+			// 0400003   电控对接
 			// 0400004   洗衣机对接
 			if( $v['dev_type']=='shower' )
-				$trade_type_id = '0400003';
+				$trade_type_id = '0400002';
 			
 			if( $v['dev_type']=='washer' )
 				$trade_type_id = '0400004';
@@ -36,10 +37,8 @@
 				$data = array( 'fee_flag'=>1 );
 				$api->db->update( 'fee_record', $data, $con );
 			}
-*/
 		}
-			
-		break;
+		
 		sleep( 5 );
 	} 
 	

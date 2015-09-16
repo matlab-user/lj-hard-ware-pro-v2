@@ -42,6 +42,12 @@
 			return $response;
 		}
 		
+		public function get_token_from_database( $student_no ) {
+			$row = $this->db->get_one( "select card_token from user_info where studentNo=$student_no" );
+			$this->pay_token = $row['card_token'];
+			return true;
+		}
+		
 		// 查询 fee_record 中未支付的账单 
 		public function get_unpay_fee() {
 			$res = $this->db->get_all( "SELECT * FROM fee_record WHERE fee_flag=0 " );

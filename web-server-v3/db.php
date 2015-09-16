@@ -93,7 +93,7 @@ class db{
         if(!$this->query($sql)) return false;
         return true;
     }
- 
+ 	
     //删除
     public function delete( $table,$condition="") {
         if( empty($condition) ) {

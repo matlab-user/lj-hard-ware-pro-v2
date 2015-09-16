@@ -5,10 +5,15 @@
 	
 	$config['pay_token'] = 'zhaxpaycgi';
 	
+	//$str = '{"resp_desc":"\u4ea4\u6613\u5931\u8d25","resp_code":"1099","data":"\u7528\u6237\u5b66\u53f7201421080121\u6d88\u8d39\u4ea4\u6613[\u6d88\u8d39\u91d1\u989d\uff1a100\u5206,\u6d88\u8d39\u65f6\u95f4\uff1a2015-09-14 12:26:50]\u5931\u8d25,\u5931\u8d25\u539f\u56e0\uff1a[[\u4e00\u5361\u901a\u63a5\u53e3-\u6d88\u8d39\u4ea4\u6613]\u901a\u8fc7\u5b66\u53f7<201421080121>\u9a8c\u8bc1\u4e00\u5361\u901a\u8d26\u6237\u5bc6\u7801\u5931\u8d25,\u8f93\u5165\u5bc6\u7801\u53ef\u80fd\u9519\u8bef.]"}';
+	//$str = '{"resp_desc":"\u767b\u5f55\u5931\u8d25","resp_code":"1098","data":"\u9274\u6743\u5931\u8d25,[\u4e00\u5361\u901a\u63a5\u53e3-\u767b\u9646]\u901a\u8fc7\u5b66\u53f7<201520152015>\u9a8c\u8bc1\u4e00\u5361\u901a\u8d26\u6237\u5bc6\u7801\u5931\u8d25,\u8f93\u5165\u5bc6\u7801\u53ef\u80fd\u9519\u8bef."}';
+	
+	//var_dump( json_decode( $str, true ) );
+	//exit;
 	//$db = new db( $config );
-	$str = '201520152015201509131846314782+0.01'.'+'.$config['pay_token'];
-	echo md5( $str )."\r\n";
-	exit;
+	//$str = '201520152015201509131846314782+0.01'.'+'.$config['pay_token'];
+	//echo md5( $str )."\r\n";
+	//exit;
 	
 	// MD5(订单号 + 摘要 + 金额 + 学校编号 + 签名KEY)
 /*	
@@ -40,17 +45,17 @@
 	$str = '{"sign":"7b3233c9f22739adf77c9513a762858a467b233b","n":"153807","action":"login","stu_no":"201520152015","t":"20150902153807","password":"333333"}';
 	$request_result = http_post_json( $str );
 	
-	$str = '{"sign":"7b3233c9f22739adf77c9513a762858a467b233b","n":"153807","action":"getCardTransaction","stu_no":"201520152015","t":"20150902153807","page_index":"1","page_szie":"10","begin_date":"20150204010101","end_date":"20150211010101","type":"zhichu"}';
-	$request_result = http_post_json( $str );
-	exit;
+	//$str = '{"sign":"7b3233c9f22739adf77c9513a762858a467b233b","n":"153807","action":"getCardTransaction","stu_no":"201520152015","t":"20150902153807","page_index":"1","page_szie":"10","begin_date":"20150204010101","end_date":"20150211010101","type":"zhichu"}';
+	//$request_result = http_post_json( $str );
+	//exit;
 	
 	$str = '{
 			  "action" : "openShower",
 			  "stu_no" : "201520152015",
 			  "t" : "1440489421",
-			  "device_id" : "J61021",
+			  "device_id" : "J61051",
 			  "time" : 300,
-			  "delay_close" : "0",
+			  "delay_close" : 5,
 			  "delay_open" : 0,
 			  "n" : "717733",
 			  "sign" : "3960d1f4ff1fd7fa3c8894e3389d52759b0d26db",
@@ -59,7 +64,7 @@
 
 	http_post_json( $str );
 
-	sleep( 10 );
+	sleep( 8 );
 	echo "close the shower\r\n";
 	$str = '{
 	  "action" : "closeShower",
@@ -82,8 +87,8 @@
 		$ch = curl_init();
 		curl_setopt( $ch, CURLOPT_POST, 1 );
 		curl_setopt( $ch, CURLOPT_TIMEOUT, 5 );
-		//curl_setopt( $ch, CURLOPT_URL, "http://218.6.163.88:50000/service.php" );
-		curl_setopt( $ch, CURLOPT_URL, "http://127.0.0.1/web-server/service.php" );
+		curl_setopt( $ch, CURLOPT_URL, "http://218.6.163.88:50000/service.php" );
+		//curl_setopt( $ch, CURLOPT_URL, "http://127.0.0.1/web-server/service.php" );
 		//curl_setopt( $ch, CURLOPT_URL, "http://10.71.29.51:50000/service.php" );
 		curl_setopt( $ch, CURLOPT_POSTFIELDS, $jsonStr );
 		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, 1 );

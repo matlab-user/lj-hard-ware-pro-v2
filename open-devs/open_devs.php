@@ -13,6 +13,8 @@
 	$except_devs = array('J61021','J63211','J65031','J65091','J65171','J65211');
 	$ea1 = array('J65011','J65021','J65041','J65051','J65061','J65071','J65081','J65101','J65111','J65121','J65131','J65141','J65151','J65161','J65181','J65191','J65201','J65221','J65231','J65251','J65261');
 	$except_devs = array_merge( $except_devs, $ea1 );
+	$ea2 = array();
+	$except_devs = array_merge( $except_devs, $ea2 );
 	
 	$con = '';
 	$con2 = '';
@@ -45,7 +47,8 @@
 	$data['ins'] = 'NONE';
 	$data['student_no'] = '-1';
 	$sql_res = $db->update( 'devices_ctrl', $data, $con2 );
-		
+	$sql_res = $db->update( 'devices_ctrl', $data, "dev_type='washer'" );
+
 	$data['student_no'] = '201520152015';
 	$s1 = microtime( true );
 	while( 1 ) {

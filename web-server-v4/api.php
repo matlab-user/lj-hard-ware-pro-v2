@@ -2,6 +2,7 @@
 	header( 'Content-type:text/html;charset=utf-8' );
 	
 	require_once( 'db.php' );
+	require_once('logger.php');
 
 	class cardApi {
 		private $api_server_url;
@@ -109,9 +110,8 @@
 			return true;
 		}
 
-		//获取设备列表
+			//获取设备列表
 		public function get_device_list( $student_no, $token='' ) {
-	
 			// 获取用户所有绑定设备
 			// 此时获得的 device_id 为 devices_ctrl 表中的 dev_locate; 
 			$con = '';
@@ -151,7 +151,7 @@
 					if( $v['student_no']==$student_no ) {
 						if( $v['ins']=='OPEN' ) {
 							if( $v['open_t']>0 ) {
-								$item['deviceStatus'] = 1;			// 设备被自己占用(已开启)
+								$item['deviceStatus'] = 1;			// 设备被自己占用(开启中)
 								$item['lt'] = time() - $v['open_t'];
 							}
 							else {
@@ -185,26 +185,24 @@
 			return true;
 		}
 
-	
-		public function get_version_info() {
-			echo '{
-				"resp_desc" : "获取成功",
-				"resp_code" : "0",
-				"data":{
-					"android":{
-						"version":1,
-						"release_notes":"1:功能升级\n2：BUG修复",
-						"download_url":"http://www.etzk.com/card/res/appnewest.apk"
-					},
-					"ios":{
-						"version":1,
-						"release_notes":"1:功能升级\n2：BUG修复",
-						"download_url":"http://itunes.apple.com/cn/app/id474693318"
-					}
-				}		
-			}';
-		}
-
+		public function get_version_info($os) {
+				echo '{
+                               	 "resp_desc" : "获取成功",
+                               	 "resp_code" : "0",
+                               	 "data":{
+                                        "android":{
+                                                "version":"1",
+                                                "release_notes":"1:功能升级\n2：BUG修复",
+                                                "download_url":"http://www.etzk.com/card/res/appnewest.apk"
+                                        },
+                                        "ios":{
+                                                "version":"1.0.0",
+                                                "release_notes":"1:功能升级\n2：BUG修复",
+                                                "download_url":"http://pre.im/a01e"
+                               	        }
+                	       	 }
+				}';
+			}
 		public function get_carrier_info( $token ) {
 			echo '{
 					"resp_desc" : "获取成功",
@@ -214,14 +212,27 @@
 		}
 
 		//修改用户信息
-		public function edit_user_info( $student_no, $user_info, $token ) {
-			
+		public function edit_user_info( $student_no, $user_info, $token ) {		
+			$log = new logger();
 			if( $user_info['phone'] ) {
 				$values['phone'] = $user_info['phone'];
 			}
 			
+			$log->write( json_encode($user_info), 'edit_user_info-b');	
 			if( $user_info['wash_setting'] ) {
-				$values['wash_setting'] = $user_info['wash_setting'];
+				$values['wash_setting'] = str_replace( "'", '"', $user_info['wash_setting'] );
+				$values['wash_setting'] = mysql_real_escape_string( $values['wash_setting'] );
+				//$values['wash_setting'] = $user_info['wash_setting'];
+				//$values['wash_setting'] = str_replace( "'", '"', $values['wash_setting'] );
+/*
+				$mid = mysql_real_escape_string( $user_info['wash_setting'] );
+				$sql = "update user_info set wash_setting='$mid' where studentNo='$student_no'";
+				$q2 = $this->db->query( $sql );
+				if( $q2 )
+					$log->write( '1  '.$sql, 'edit_user_info' );
+				else
+					$log->write( '0  '.$sql, 'edit_user_info' );
+*/
 			}
 			
 			if( $user_info['carrier_account'] ) {
@@ -236,8 +247,10 @@
 				$values['nickName'] = $user_info['nickName'];
 			}
 			
-			$condition = "studentNo='$student_no'";
+			$condition = "studentNo='$student_no'";	
 			$query = $this->db->update( 'user_info', $values, $condition );
+			$log->write( json_encode($values), 'edit_user_info-a' );
+
 			if( $query ) {
 				$this->get_user_info( $student_no, $token );
 			}
@@ -259,8 +272,13 @@
 			$row = $this->db->get_one( $sql );
 			$result['resp_desc'] = '';
 			$result['resp_code'] = '0';
-			$result['data'] = $row;
 			
+			if( $row['headImg']=='' )
+				$row['headImg'] = 'http://yuncard.wingpass.cn:50000/images/header.png';
+
+			$result['data'] = $row;
+			//$log = new logger();
+			//$log->write( json_encode($result), 'get_user_info' );	
 			echo json_encode( $result );
 			return true;
 		}
@@ -325,16 +343,32 @@
 		}
 
 		//修改密码
-		public function change_password( $student_no, $student_password, $new_password ) {
+		public function changePassword( $student_no, $student_password, $new_password ) {
+			$log = new logger();
+			$log->write( $student_no.'  '.$student_password, 'changepassword---1' );
+			$schoolId=$this->school_id;
+			$row=$this->db->get_one("select card_token from user_info where studentNo = ".$student_no." limit 1");
 			
-			$condition = "student_no='$student_no' and password='$student_password'";
-			$values = array( 'password'=>'$new_password' );
-			$query = $this->db->update( 'user_info', $values, $condition );
-			
-			if( $query ) {
-				$result['resp_code'] = '0';
-				$result['resp_desc'] = '修改成功';
-				$result['data'] = '';
+			$card_token=$row['card_token'];
+			$post_data=array("body"=>array("studentNo"=>$student_no,"token"=>$card_token,"oldPassword"=>$student_password,"newPassword"=>$new_password,"schoolId"=>$schoolId));
+
+			 $log->write(json_encode($post_data), 'changepassword-0' );
+
+			$response=$this->http_post_json('changePassword',json_encode($post_data));
+			if($response['resp_code']=='0'){
+				$condition = "studentNo='$student_no'";
+				$values = array( 'password'=>$new_password );
+				$query = $this->db->update( 'user_info', $values, $condition );
+				if( $query ) {
+					$result['resp_code'] = '0';
+					$result['resp_desc'] = '修改成功';
+					$result['data'] = '';
+				}
+				else {
+                                	$result['resp_code'] = '1002';
+                                	$result['resp_desc'] = '更新错误';
+                                	$result['data'] = '';
+				}
 			}
 			else {
 				$result['resp_code'] = '1002';
@@ -342,17 +376,23 @@
 				$result['data'] = '';
 			}
 			
+			$log->write(json_encode($result), 'changepassword' );
 			echo json_encode( $result );
 			return true;
 		}
 
 		// 开淋浴房
 		// $device_id - 设备位置信息，不是设备硬件id
-		public function open_shower( $student_no, $device_id, $time, $delay_open=0, $delay_close, $token, $password='' ) {
+		
+		public function open_shower( $student_no, $device_id, $time, $delay_open=0, $delay_close=1800, $token, $password='' ) {
 			$begin_time = time() + $delay_open;
+			if( $delay_close>0 )
+				$pre_end_time = $delay_close;
+			else 
+				$pre_end_time = 1800;
+			
 			$this->operate_device_with_fee( $student_no, $device_id, 'OPEN', 0, $password, $token, $begin_time, $pre_end_time );
 		}
-		
 		// 关淋浴房
 		// $device_id - 设备位置信息，不是设备硬件id
 		public function close_shower( $student_no, $device_id, $token, $password ) {
@@ -360,7 +400,7 @@
 		}
 		
 		// 开洗衣机
-		// $device_id - 设备位置信息，不是设备硬件id
+		// $device_id - 设备位置信息，不是设备硬件
 		public function open_washer( $student_no, $device_id, $token, $password ) {
 			$this->operate_device_with_fee( $student_no,$device_id, 'OPEN', 0, $password, $token, $begin_time, $pre_end_time );
 		}
@@ -375,7 +415,7 @@
 		// 此函数返回的计费信息，是还没有形成真实支付账单的信息
 		// 真实的支付账单，由 hardware_server.php 生成
 		// 真实的支付，由专门程序负责
-		private function operate_device_with_fee( $student_no, $device_id, $operate='OPEN', $fee, $password='', $token='', $begin_time=0, $end_time=0 ) {
+		private function operate_device_with_fee( $student_no, $device_id, $operate='OPEN', $fee, $password='', $token='', $begin_time=0, $end_time=1800 ) {
 			
 			$buff = '';
 			$query = FALSE;
@@ -391,10 +431,7 @@
 					switch( $res['student_no'] ) {
 						case '-1':
 							// 写数据库(加上条件，保证合法抢占)，socket发送指令
-							$data = array( 'student_no'=>$student_no, 'ins'=>'OPEN', 'ins_recv_t'=>time() );
-							if( $begin_time>time() )
-								$data['ins_recv_t'] = $begin_time;
-								
+							$data = array( 'student_no'=>$student_no, 'ins'=>'OPEN', 'ins_recv_t'=>$begin_time, 'pre_close_t'=>$end_time );
 							$query = $this->db->update( 'devices_ctrl', $data, "dev_id='".$res['dev_id']."' AND student_no='-1'" );
 							break;
 						
@@ -414,7 +451,7 @@
 									"resp_code" : "'.$resp_code.'",
 									"data"      : {}
 								 }';
-							return;
+							return;						 
 							break;
 					}
 					break;
@@ -528,9 +565,18 @@
 			$response = $this->signInAndGetUser( $student_no, $student_password );
 			$result['resp_desc'] = $response['resp_desc'];
 			$result['resp_code'] = $response['resp_code'];
-				
+		
+			if( $student_no=='201520152015' ) {
+				$log = new logger();
+				$log->write( json_encode($response), 'login' );
+			}	
+			//$log = new logger();
+			//$log->write( json_encode($response), 'login' );
+	
 			if( $result['resp_code']>0 ) {
-				$result['data'] = $response['data'];
+				$result['resp_desc'] = $response['data'];
+				$result['data'] = '{}';
+				//$result['data'] = $response['data'];
 				echo json_encode( $result );
 			}
 			elseif( $result['resp_code']==0 ) {
@@ -561,13 +607,17 @@
 				if( $student_password ) {
 					$user_info['password'] = $student_password;
 				}
-				
+			
+				if( $user_map['token'] ) {
+					$user_info['card_token'] = $user_map['token'];
+				}
+	
 				//加密token
 				//$user_info["token"] = $user_map["token"];
 				$auth_token = $student_no.'|>|'.$student_password.'|>|'.$user_map['token'];
 				$encode_auth_token = $this->authcode( $auth_token, 'ENCODE', $config['hx_auth_key'] );		// $encode_auth_key 没有赋值
 				$user_info['token'] = $encode_auth_token;
-				
+	
 				if( $row ) {
 					$condition = "studentNo='$student_no'";
 					$query = $this->db->update( 'user_info', $user_info, $condition );
@@ -578,6 +628,7 @@
 					$user_info['headImg'] = $user_map['headImg'];
 					$user_info['phone'] = $user_map['phone'];
 					$user_info['email'] = $user_map['email'];
+					$user_info['card_token'] = $user_map['token'];
 					$query = $this->db->insert( 'user_info', $user_info );
 				}
 				
@@ -587,6 +638,8 @@
 					$result['resp_desc'] = '';
 					$result['resp_code'] = '0';
 					$result['data'] = $row;
+					if( $row['headImg']=='' )
+						$row['headImg'] = 'http://yuncard.wingpass.cn:50000/images/header.png';
 					echo json_encode( $result );
 				}
 				else {
@@ -604,25 +657,115 @@
 		}
 
 		public function get_card_transaction( $student_no, $token, $page_index=1, $page_size=10, $begin_date=0, $end_date=0 ) {
+			$log = new logger();
+			$log->write('into get_card_transaction', 'test');
+
+			
+			$row = $this->db->get_one( "select card_token from user_info where studentNo = ".$student_no." limit 1" );
+			$token = $row['card_token'];
+
 			$response = $this->getCardTransaction( $student_no, $token, $page_index, $page_size, $begin_date, $end_date );
 			echo json_encode( $response );
 		}
 
 		public function hand_lost( $student_no, $token, $card_no, $password, $opt_type ) {
+			
+			$row = $this->db->get_one( "select card_token from user_info where studentNo = ".$student_no." limit 1" );
+			$token = $row['card_token'];
+				
+			if( empty($card_no) ) {
+				$row = $this->db->get_one( "select cardNo from user_info where studentNo='".$student_no."' limit 1" );
+				$card_no = $row['cardNo'];	
+			}
+
 			$response = $this->handLost( $student_no, $token, $card_no, $password, $opt_type );
 			echo json_encode( $response );
 		}
 
 		public function get_subsidy_list( $student_no, $token, $page_index, $page_size, $begin_date, $end_date ) {
+			$log = new logger();
+			$log->write('into get_subsidy_list', 'test');
+			
+			$row = $this->db->get_one( "select card_token from user_info where studentNo = ".$student_no." limit 1" );
+			$token = $row['card_token'];
+
 			$response = $this->getSubsidyList( $student_no, $token, $page_index, $page_size, $begin_date, $end_date );
 			echo json_encode( $response );
 		}
 
 		//充值
-		public function recharge( $student_no, $token, $password, $money, $name ) {
-			$deposit_no = date('YmdHis') . rand(1000,9999);
-			$response = $this->tpdeposit( $student_no, $token, $deposit_no, $password, $money, $name );
+		public function recharge( $student_no, $token, $password, $money, $name='', $type='' ) {
+			$deposit_no = $student_no . date('YmdHis') . $type . rand(1000,9999);
+
+			$row = $this->db->get_one( "select card_token,userName from user_info where studentNo = ".$student_no." limit 1" );
+			$card_token = $row['card_token'];
+
+			$response = $this->tpdeposit( $student_no, $card_token, $deposit_no, $password, $money, $row['userName'] );
+
 			echo json_encode( $response );
+		}
+
+		public function buyElect($student_no, $room, $loudongId, $password,$trade_money){
+			$school_id = $this->school_id;
+			$loudongId='51';
+			/**
+			*先扣费,扣费成功就写日志,再买电
+			*/
+			//获取token
+			$row= $this->db->get_one("select card_token from user_info where studentNo = ".$student_no." limit 1");
+			$card_token=$row['card_token'];
+			//一卡通扣费
+			$trade_no = date("YmdHis").rand(1000,9999);
+			//一卡通充费单位是分，电控系统是元
+			$money=$trade_money/100;
+			$post_data=array("body"=>array("studentNo"=>$student_no,"token"=>$card_token,"password"=>$password,
+				"tradeBranchId"=>"0400003","tradeNo"=>$trade_no,"tradeMoney"=>$trade_money,"schoolId"=>$school_id));
+			$response=$this->http_post_json("tptrade",json_encode($post_data));
+			
+			//$log = new logger();
+			//$log->write( json_encode($response).'  '.json_encode($post_data), 'buyElect' );
+
+			//一卡通付电费成功
+			if($response['resp_code']=="0"){
+				error_log("$student_no 购电 $trade_money 流水号 $trade_no \r\n",'3','buyelect.txt');
+				//电控系统划电
+				$sql="select room_id from kd_room where loudong_id=$loudongId and room=$room";
+				$response=$this->http_get_json("http://10.71.29.33:8080/sims/msquery","$sql");
+			//$log->write( $response.'  '.$room_id, "buyElect-2" );
+				$response=json_decode($response,true);
+				$room_id=$response[0]['room_id'];
+				$response =$this->http_get_json("http://10.71.29.33:8080/sims/msquery","insert into kd_tmp (buyer_id,xiaoqu_id,room_id,tranamt,endatatime,custsn) values ($student_no,'1',$room_id,$money,Getdate(),$trade_no)");
+			
+			//$log->write( $response.'  '.$room_id, "buyElect-roomid" );
+
+				//划电成功
+				if($response==1){
+					$response=json_encode(array("resp_desc"=>"充值成功。电量余额更新较慢，请次日查询。","resp_code"=>"0","data"=>array("loudongId"=>$loudongId,"room"=>$room,"trade_money"=>$trade_money)));
+					echo $response;
+			}
+				else{
+					$response=json_encode(array("resp_desc"=>"充值失败","resp_code"=>"1099","data"=>""));
+					echo $response;
+				}
+		}
+			else{
+				$response=json_encode(array("resp_desc"=>"充值失败,请退出登录后重试,或检查账号余额。","resp_code"=>"1099","data"=>""));
+                                        echo $response;
+			}
+	}
+
+		//读取房间剩余电量
+		public function readElect($room,$loudongId){
+			$loudongId="51";
+			$sql="select usedAmp,allAmp from kd_room where room=$room and loudong_id=$loudongId";
+			$response=$this->http_get_json("http://10.71.29.33:8080/sims/msquery",$sql);
+			$response=json_decode($response,true);
+			$response[0]['allAmp']=floor($response[0]['allAmp']);
+			$response[0]['usedAmp']=floor($response[0]['usedAmp']);
+			$restElect=$response[0]['allAmp']-$response[0]['usedAmp'];
+			$result=array("resp_desc"=>"查询成功","resp_code"=>"0","data"=>array("restElect"=>$restElect,"room"=>
+				$room,"loudongId"=>$loudongId));
+			echo json_encode($result);
 		}
 
 		 /**
@@ -669,36 +812,103 @@
 			$this->token = $token;
 			return $response;
 		}
-
+		
+		
 		/*
 			* 消费记录查询
 			* @param student_no 
 		*/
 		private function getCardTransaction( $student_no, $token, $page_index, $page_size, $begin_date, $end_date ) {
 			$school_id = $this->school_id;
-			$post_data = json_encode( array('body'=>array('studentNo'=>$student_no,'token'=>$token,'pageIndex'=>$page_index,'pageSzie'=>'$page_size','beginDate'=>$begin_date,'endDate'=>$end_date,'schoolId'=>$school_id)) );
+			$post_data = json_encode( array('body'=>array('studentNo'=>$student_no,'token'=>$token,'pageIndex'=>$page_index,'pageSzie'=>$page_size,'beginDate'=>$begin_date,'endDate'=>$end_date,'schoolId'=>$school_id)) );
 			$data = $this->http_post_json('getCardTransaction',$post_data);
+			$log = new logger();
+			
+			
 			if( is_array($data['data']) ) {
-				$data['data'] = $data['data']['list'];	
+				$list = $data['data']['list'];
+				$log->write($list, 'api test');
+				
+				$newlist = null;
+				foreach($list as $k=>$v) {
+					$data = null;
+					$data['tranName'] = $v['tranName'];
+					$data['tranAmt'] = $v['tranAmt'];
+					$data['tranDate'] = $v['tranDate'];
+						
+					/* $data['mercName'] = $v['mercName'];
+					$data['subSystemName'] = $v['subSystemName'];
+					$data['posNo'] = $v['posNo']; */
+						
+					$newlist[] = $data;
+				}
+			
+				$output['data'] = $newlist;
+				$output['resp_code'] = '0';
+				$output['resp_desc'] = '';
 			}
 			else {
-				$data['resp_desc'] = '暂无消费记录';
+				$output['data'] = array();
+				$output['resp_code'] = '0';
+				$output['resp_desc'] = '暂无消费记录';
 			}
-			return $data;
+			
+			
+			$log->write(json_encode($output), 'api');
+			
+			return $output;
 		}
 
 		/*
 			* 充值记录查询
 			* @param student_no 
 		*/
-		private function getSubsidyList( $student_no, $token, $page_index, $page_size, $begin_date, $end_date ) {
+		public function getSubsidyList( $student_no, $token, $page_index, $page_size, $begin_date, $end_date ) {
+			$log = new Logger();
 			$school_id = $this->school_id;
-			$post_data = json_encode( array('body'=>array('studentNo'=>$student_no,'token'=>$token,'pageIndex'=>$page_index,'pageSzie'=>$page_size,'beginDate'=>$begin_date,'endDate'=>$end_date,'schoolId'=>$school_id)) );
+			
+			$sql = "select card_token from user_info where studentNo = ".$student_no." limit 1";
+			$dao = $this->db->get_one($sql);
+			$card_token = $dao['card_token'];
+			$post_data = json_encode( array('body'=>array('studentNo'=>$student_no,'token'=>$card_token,'pageIndex'=>$page_index,'pageSzie'=>$page_size,'beginDate'=>$begin_date,'endDate'=>$end_date,'schoolId'=>$school_id)) );
+			
 			$data = $this->http_post_json( 'getSubsidyList', $post_data );
+
+			
+			
+
 			if( is_array($data['data']) ) {
-				$data['data'] = $data['data']['list'];	
+				$list = $data['data']['list'];
+				$log->write($list, 'api test');
+			
+				$newlist = null;
+				foreach($list as $k=>$v) {
+					$data = null;
+					$data['tranName'] = $v['tradeName'];
+					$data['tranAmt'] = $v['grantMoney'];
+					$data['tranDate'] = intval($v['grantDate']) * 1000000 ;
+			
+					/* $data['mercName'] = $v['mercName'];
+					 $data['subSystemName'] = $v['subSystemName'];
+					$data['posNo'] = $v['posNo']; */
+			
+					$newlist[] = $data;
+				}
+					
+				$output['data'] = $newlist;
+				$output['resp_code'] = '0';
+				$output['resp_desc'] = '';
 			}
-			return $data;
+			else {
+				$output['data'] = array();
+				$output['resp_code'] = '0';
+				$output['resp_desc'] = '暂无消费记录';
+			}
+				
+				
+			$log->write(json_encode($output), 'api');
+
+			return $output;
 		}
 
 		/*
@@ -706,22 +916,35 @@
 			* @param student_no 
 		*/
 		private function tpdeposit( $student_no, $token, $deposit_no, $password, $money, $name ) {
-			$school_id = $this->school_id;
-			$post_data = json_encode( array('body'=>array('studentNo'=>$student_no,'token'=>$token,'password'=>$password,'depositNo'=>$deposit_no,'depositMoney'=>$money,'schoolId'=>$school_id)) );
-			$data = $this->http_post_json( 'tpdeposit', $post_data );
-			$sign = md5( $deposit_no.$summary.$trade_money.$school_id.$this->config['pay_token'] );
+			$school_id = $this->config['pay_school_id'];
+			$data['resp_code'] = 0;
+			$data['resp_desc'] = '提交订单成功';
+
 			if( $data['resp_code']==0 ) {
-				$trade_money = number_format( (intval($money)/100), 2 );
-				$summary = '充值' . $trade_money . '元';
+				$trade_money = number_format( (intval( $money)/100), 2 );
+				$summary = 'pay '.$trade_money.' RMB';
+
+				$mid_str = $deposit_no.$summary.$trade_money.$school_id.$this->config['pay_token'];
+				$sign = md5( $mid_str );
+
 				$data['data'] = array(
 					'order_no'=>$deposit_no,
 					'summary'=>$summary,
-					'amount'=>$money,
+					'amount'=>$trade_money,
 					'school_code'=>$school_id,
-					'school_account'=>$this->config['school_account'],
+					'school_account'=>$student_no,
 					'name'=>$name,
 					'sign'=>$sign
 				);
+				
+				$d['order_no'] = $deposit_no;
+				$d['summary'] = $summary;
+				$d['amout'] = $money;
+				$d['school_code'] = $school_id;
+				$d['stu_no'] = $student_no;
+				$d['name'] = $name;
+				$d['sign_str'] = $sign;	
+				$this->db->insert( 'hpay_table', $d );
 
 			}
 			return $data;
@@ -745,7 +968,7 @@
 		private function handLost( $student_no, $token, $card_no, $password, $opt_type ) {
 			$school_id = $this->school_id;
 			$post_data = json_encode( array('body'=>array('studentNo'=>$student_no,'cardNo'=>$card_no,'token'=>$token,'password'=>$password,'optType'=>$opt_type,'schoolId'=>$school_id)) );
-			$data = $this->http_post_json( 'tptrade',$post_data );
+			$data = $this->http_post_json( 'handLost',$post_data );
 			return $data;
 		}
 
@@ -786,7 +1009,14 @@
 		  $result = $this->parse_card_data( $request_result );
 		  return $result;
 		}
-
+		
+		//get 传输数据
+		private function http_get_json($getAddress,$sql){
+		$sql=urlencode($sql);
+		$url=$getAddress.'?sql='.$sql;
+		$data=file_get_contents($url);
+		return $data;
+		}
 		//与智控设备通信
 		private function send_message( $message ) {
 			
