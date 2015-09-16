@@ -412,12 +412,19 @@
 		// 开洗衣机
 		// $device_id - 设备位置信息，不是设备硬件
 		public function open_washer( $student_no, $device_id, $token, $password ) {
-			$this->operate_device_with_fee( $student_no,$device_id, 'OPEN', 0, $password, $token, $begin_time, $pre_end_time );
+			$begin_time = time();
+			$this->operate_d$begin_timeevice_with_fee( $student_no,$device_id, 'OPEN', 0, $password, $token, $begin_time, $pre_end_time );
 		}
 
 		// 关洗衣机
 		// $device_id - 设备位置信息，不是设备硬件id
-		public function close_washer( $student_no, $device_id, $token, $password ) {	
+		public function close_washer( $student_no, $device_id, $token, $password ) {
+			$result['resp_code'] = '1';
+			$result['resp_desc'] = '洗衣机运行50分钟后会自动关闭';
+			$result['data'] = '';
+			echo json_encode( $result );
+			return;
+			
 			$this->operate_device_with_fee( $student_no, $device_id, 'CLOSE', 0, $password, $token, 0, $end_time );
 		}
 		
@@ -450,6 +457,9 @@
 					switch( $res['student_no'] ) {
 						case '-1':
 							// 写数据库(加上条件，保证合法抢占)，socket发送指令
+							if( $res['dev_type']=='washer' )
+								$end_time = 3000;
+							
 							$data = array( 'student_no'=>$student_no, 'ins'=>'OPEN', 'ins_recv_t'=>$begin_time, 'pre_close_t'=>$end_time );
 							$query = $this->db->update( 'devices_ctrl', $data, "dev_id='".$res['dev_id']."' AND student_no='-1'" );
 							break;
@@ -482,6 +492,7 @@
 					else {
 						if( $res['student_no']=='-1' ) {
 							$msg = '请先开启设备';
+							$resp_code = 1;
 						}
 						elseif( $res['student_no']==$student_no ) {						// 自己开的设备，自己关掉
 							$now = time();
@@ -504,7 +515,9 @@
 					}
 					
 					if( $msg!='' ) {
-						$str = '{ "resp_desc":"'.$msg.'","resp_code":"'.$resp_code.'","data":"{}"}';	
+						//$price = ( $res['price']/100 ).'元/分钟';
+						//$fee_data = '{"fee_rate":"'.$price.'","time":"0分钟","total_fee":"0元"}';
+						$str = '{ "resp_desc":"'.$msg.'","resp_code":"'.$resp_code.'","data":'.$fee_data.'}';	
 						echo $str;
 						return;
 					}

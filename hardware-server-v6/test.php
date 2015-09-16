@@ -4,7 +4,9 @@
 	require_once( 'db.php' );
 	
 	$config['pay_token'] = 'zhaxpaycgi';
-	
+	//$str = '{"resp_desc":"设备关闭中，账单稍后生成。此次约耗时0.25秒,花费0.08元","resp_code":"1","data":"{}"}';
+	//echo var_dump( json_decode($str,true) );
+	//exit;
 	//$str = '{"resp_desc":"\u4ea4\u6613\u5931\u8d25","resp_code":"1099","data":"\u7528\u6237\u5b66\u53f7201421080121\u6d88\u8d39\u4ea4\u6613[\u6d88\u8d39\u91d1\u989d\uff1a100\u5206,\u6d88\u8d39\u65f6\u95f4\uff1a2015-09-14 12:26:50]\u5931\u8d25,\u5931\u8d25\u539f\u56e0\uff1a[[\u4e00\u5361\u901a\u63a5\u53e3-\u6d88\u8d39\u4ea4\u6613]\u901a\u8fc7\u5b66\u53f7<201421080121>\u9a8c\u8bc1\u4e00\u5361\u901a\u8d26\u6237\u5bc6\u7801\u5931\u8d25,\u8f93\u5165\u5bc6\u7801\u53ef\u80fd\u9519\u8bef.]"}';
 	//$str = '{"resp_desc":"\u767b\u5f55\u5931\u8d25","resp_code":"1098","data":"\u9274\u6743\u5931\u8d25,[\u4e00\u5361\u901a\u63a5\u53e3-\u767b\u9646]\u901a\u8fc7\u5b66\u53f7<201520152015>\u9a8c\u8bc1\u4e00\u5361\u901a\u8d26\u6237\u5bc6\u7801\u5931\u8d25,\u8f93\u5165\u5bc6\u7801\u53ef\u80fd\u9519\u8bef."}';
 	
@@ -53,7 +55,7 @@
 			  "action" : "openShower",
 			  "stu_no" : "201520152015",
 			  "t" : "1440489421",
-			  "device_id" : "J61051",
+			  "device_id" : "J62L03",
 			  "time" : 300,
 			  "delay_close" : 5,
 			  "delay_open" : 0,
@@ -67,10 +69,10 @@
 	sleep( 17 );
 	echo "close the shower\r\n";
 	$str = '{
-	  "action" : "closeShower",
+	  "action" : "closeWasher",
 	  "stu_no" : "201520152015",
 	  "t" : "1440489421",
-	  "device_id" : "J61051",
+	  "device_id" : "J62L03",
 	  "time" : 300,
 	  "delay_close" : "0",
 	  "delay_open" : 0,

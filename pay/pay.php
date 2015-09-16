@@ -30,8 +30,8 @@
 				$trade_type_id = '0400004';
 			
 			$response = $api->tptrade( $v['student_no'], $api->pay_token, $v['trade_no'], $password, $trade_type_id, $v['fee'] );
-			echo $response['resp_desc']."\t".$response['resp_code']."\t".$response['data']."\r\n";
-			
+			//echo $response['resp_desc']."\t".$response['resp_code']."\t".$response['data']."\r\n";
+
 			if( $response['resp_code']==0 ) { 	// 支付成功
 				$con = 'trade_no="'.$v['trade_no'].'"';
 				$data = array( 'fee_flag'=>1 );
