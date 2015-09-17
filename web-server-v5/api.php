@@ -413,7 +413,7 @@
 		// $device_id - 设备位置信息，不是设备硬件
 		public function open_washer( $student_no, $device_id, $token, $password ) {
 			$begin_time = time();
-			$this->operate_d$begin_timeevice_with_fee( $student_no,$device_id, 'OPEN', 0, $password, $token, $begin_time, $pre_end_time );
+			$this->oparevice_with_fee( $student_no,$device_id, 'OPEN', 0, $password, $token, $begin_time, $pre_end_time );
 		}
 
 		// 关洗衣机
@@ -515,8 +515,6 @@
 					}
 					
 					if( $msg!='' ) {
-						//$price = ( $res['price']/100 ).'元/分钟';
-						//$fee_data = '{"fee_rate":"'.$price.'","time":"0分钟","total_fee":"0元"}';
 						$str = '{ "resp_desc":"'.$msg.'","resp_code":"'.$resp_code.'","data":'.$fee_data.'}';	
 						echo $str;
 						return;

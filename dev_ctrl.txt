@@ -1,3 +1,9 @@
 update devices_ctrl set student_no='201520152015',ins='OPEN', ins_recv_t=unix_timestamp(now()) where dev_type='washer';
 
 update devices_ctrl set ins='NONE' where dev_type='washer';
+
+select * from yunkadb.fee_record where dev_type='washer';
+
+select * from yunkadb.fee_record where dev_type='washer';
+
+insert into yunkadb.fee_payed_record select * from fee_record where fee_flag=1;

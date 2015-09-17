@@ -9,6 +9,9 @@
 	
 	$str = file_get_contents( 'php://input' );
 	
+	/* $log = new logger();
+	$log->write( $str, 'file_get_contents--service' ); */
+	
 	$str = str_replace( "\\\"", "'", $str );
 	$post = json_decode( $str, true );
 	$api->interface_valid( $post );
@@ -95,6 +98,8 @@
 			break;
 		
 		case 'editUserInfo':
+			//$log = new logger();
+			//$log->write( json_encode($post), 'editUserInfo--service' );
 			$token = $post['token'];
 			$api->edit_user_info( $student_no,$post,$token );
 			break;
@@ -129,7 +134,11 @@
 			$time = $post['time'];								//分钟
 			$token = $post['token'];
 			$delay_open = $post['delay_open'];
-			$delay_close = $post['delay_close'];
+			$delay_close = $post['time'];
+
+			//$log = new logger();
+			//$log->write( $post['time'], 'openShower-delay_close' ); 
+
 			$api->open_shower( $student_no, $device_id, $time, $delay_open, $delay_close );
 			break;
 		
@@ -159,9 +168,9 @@
 			$begin_date = $post['begin_date'];
 			$end_date = $post['end_date'];
 			$type = $post['type'];
-			$log = new logger();
-			
-			$log->write("input post=" . json_encode($post), 'test');
+
+			//$log = new logger();
+			//$log->write("input post=" . json_encode($post), 'test');
 			
 			if($type == "chongru")
 				$api->get_subsidy_list( $student_no, $token, $page_index, $page_size, $begin_date, $end_date );
@@ -231,15 +240,10 @@
 			break;
 			
 		case "changePassword":
-			//$db = new db( $config );
-			//$str=json_encode($post);
-			//$d['carrier_account'] = $str;
-			//$db->update( 'user_info', $d, "studentNo='201520152015'" );
-			
+		case "change_password":
 			$oldPassword=$post['password'];
 			$newPassword=$post['new_password'];
 			$api->changePassword( $student_no, $oldPassword, $newPassword );
 			break;
-
 		}
 ?>

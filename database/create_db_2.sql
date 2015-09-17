@@ -46,3 +46,19 @@ CREATE TABLE IF NOT EXISTS fee_record (
 	`fee_flag` 		INT(11) NOT NULL DEFAULT 0,			/* 是否支付成功 0-未成功  1-成功		*/
 	PRIMARY KEY (`student_no`,`open_t`,`dev_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS fee_payed_record (
+	`dev_id` 		VARCHAR(12) NOT NULL,				/* 设备硬件唯一标号						*/
+	`dev_type`		VARCHAR(12) NOT NULL,				/* shower、washer						*/
+	`trade_no` 		CHAR(128) NOT NULL UNIQUE,			/* 交易号								*/
+	`student_no` 	CHAR(24) NOT NULL,				/* 设备使用学生学号						*/
+	`open_t` 		BIGINT NOT NULL DEFAULT 0,			/* 设备开启时间							*/
+	`close_t` 		BIGINT NOT NULL DEFAULT 0,			/* 设备关闭时间							*/
+	`break_t` 		BIGINT NOT NULL DEFAULT 0,			/* 设备使用期间中断时间					*/
+	`price` 		INT(11) NOT NULL,					/* 单价									*/
+	`sum_t` 		BIGINT NOT NULL DEFAULT 0,			/* 计费总时长							*/
+	`fee` 			INT(11) NOT NULL DEFAULT 0,			/* 总费用，单位：分						*/
+	`fee_type`		VARCHAR(12),						/* 用于记录何种情况下产生的fee，主要用于调试 */
+	`fee_flag` 		INT(11) NOT NULL DEFAULT 0,			/* 是否支付成功 0-未成功  1-成功		*/
+	PRIMARY KEY (`student_no`,`open_t`,`dev_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;

@@ -213,12 +213,12 @@
 
 		//修改用户信息
 		public function edit_user_info( $student_no, $user_info, $token ) {		
-			$log = new logger();
+			//$log = new logger();
 			if( $user_info['phone'] ) {
 				$values['phone'] = $user_info['phone'];
 			}
 			
-			$log->write( json_encode($user_info), 'edit_user_info-b');	
+			//$log->write( json_encode($user_info), 'edit_user_info-b');	
 			if( $user_info['wash_setting'] ) {
 				$values['wash_setting'] = str_replace( "'", '"', $user_info['wash_setting'] );
 				$values['wash_setting'] = mysql_real_escape_string( $values['wash_setting'] );
@@ -249,7 +249,7 @@
 			
 			$condition = "studentNo='$student_no'";	
 			$query = $this->db->update( 'user_info', $values, $condition );
-			$log->write( json_encode($values), 'edit_user_info-a' );
+			//$log->write( json_encode($values), 'edit_user_info-a' );
 
 			if( $query ) {
 				$this->get_user_info( $student_no, $token );
@@ -344,15 +344,15 @@
 
 		//修改密码
 		public function changePassword( $student_no, $student_password, $new_password ) {
-			$log = new logger();
-			$log->write( $student_no.'  '.$student_password, 'changepassword---1' );
+			//$log = new logger();
+			//$log->write( $student_no.'  '.$student_password, 'changepassword---1' );
 			$schoolId=$this->school_id;
 			$row=$this->db->get_one("select card_token from user_info where studentNo = ".$student_no." limit 1");
 			
 			$card_token=$row['card_token'];
 			$post_data=array("body"=>array("studentNo"=>$student_no,"token"=>$card_token,"oldPassword"=>$student_password,"newPassword"=>$new_password,"schoolId"=>$schoolId));
 
-			 $log->write(json_encode($post_data), 'changepassword-0' );
+			 //$log->write(json_encode($post_data), 'changepassword-0' );
 
 			$response=$this->http_post_json('changePassword',json_encode($post_data));
 			if($response['resp_code']=='0'){
@@ -376,7 +376,7 @@
 				$result['data'] = '';
 			}
 			
-			$log->write(json_encode($result), 'changepassword' );
+			//$log->write(json_encode($result), 'changepassword' );
 			echo json_encode( $result );
 			return true;
 		}
@@ -386,11 +386,26 @@
 		
 		public function open_shower( $student_no, $device_id, $time, $delay_open=0, $delay_close=1800, $token, $password='' ) {
 			$begin_time = time() + $delay_open;
-			if( $delay_close>0 )
-				$pre_end_time = $delay_close;
-			else 
-				$pre_end_time = 1800;
-			
+			//$log = new logger();
+			//$log->write( $student_no, 'open_shower_delay_close-2' );
+
+			$row = $this->db->get_one( " SELECT wash_setting FROM user_info WHERE studentNo='$student_no'" );
+
+			//$log->write( $row['wash_setting'], 'open_shower_delay_close-1' );
+
+
+			if( empty($row) )
+				$pre_end_time= 1800;
+			else {
+				$res = json_decode( $row['wash_setting'], true );
+				if( $res && !empty($res['delay_close']) ) {
+					$pre_end_time = intval( $res['delay_close'] );
+				}
+				else 
+					$pre_end_time = 1800;
+			}
+			//$log->write( $pre_end_time, 'open_shower_delay_close' );
+
 			$this->operate_device_with_fee( $student_no, $device_id, 'OPEN', 0, $password, $token, $begin_time, $pre_end_time );
 		}
 		// 关淋浴房
@@ -402,12 +417,23 @@
 		// 开洗衣机
 		// $device_id - 设备位置信息，不是设备硬件
 		public function open_washer( $student_no, $device_id, $token, $password ) {
+			$begin_time = time();
+
+			$log = new logger();
+			$log->write( $student_no.' '.$device_id.' '.date('Y-m-d H:i:s'), 'open_washer' );
+
 			$this->operate_device_with_fee( $student_no,$device_id, 'OPEN', 0, $password, $token, $begin_time, $pre_end_time );
 		}
 
 		// 关洗衣机
 		// $device_id - 设备位置信息，不是设备硬件id
-		public function close_washer( $student_no, $device_id, $token, $password ) {	
+		public function close_washer( $student_no, $device_id, $token, $password ) {
+			$result['resp_code'] = '0';
+			$result['resp_desc'] = '洗衣机运行50分钟后会自动关闭';
+			$result['data'] = '';
+			$mid = json_encode( $result );
+			echo $mid;
+			return;	
 			$this->operate_device_with_fee( $student_no, $device_id, 'CLOSE', 0, $password, $token, 0, $end_time );
 		}
 		
@@ -415,13 +441,22 @@
 		// 此函数返回的计费信息，是还没有形成真实支付账单的信息
 		// 真实的支付账单，由 hardware_server.php 生成
 		// 真实的支付，由专门程序负责
-		private function operate_device_with_fee( $student_no, $device_id, $operate='OPEN', $fee, $password='', $token='', $begin_time=0, $end_time=1800 ) {
+		private function operate_device_with_fee( $student_no, $device_id, $operate='OPEN', $fee, $password='', $token='', $begin_time=0, $end_time=0 ) {
 			
 			$buff = '';
 			$query = FALSE;
 			$resp_code = 0;
 			$now = 0;
-			
+
+			$res = $this->db->get_one( "SELECT cardBalance FROM user_info WHERE studentNo='$student_no'" );
+			if( $res['cardBalance']<=100 && $student_no!='201520152015' ) {
+				echo '{ "resp_desc" : "卡中余额低于1元，开启失败",
+					"resp_code" : "1",
+					"data"      : {}
+				 }';
+				return;	
+			}
+	
 			// 根据 device_id 获取设备是否可以使用，并且获得设备硬件控制id
 			$res = $this->db->get_all( "SELECT * FROM devices_ctrl WHERE dev_locate='$device_id'" );
 			$res = $res[0];
@@ -431,6 +466,8 @@
 					switch( $res['student_no'] ) {
 						case '-1':
 							// 写数据库(加上条件，保证合法抢占)，socket发送指令
+							if( $res['dev_type']=='washer' )
+								$end_time = 3000;
 							$data = array( 'student_no'=>$student_no, 'ins'=>'OPEN', 'ins_recv_t'=>$begin_time, 'pre_close_t'=>$end_time );
 							$query = $this->db->update( 'devices_ctrl', $data, "dev_id='".$res['dev_id']."' AND student_no='-1'" );
 							break;
@@ -463,12 +500,21 @@
 					else {
 						if( $res['student_no']=='-1' ) {
 							$msg = '请先开启设备';
+							$resp_code = 1;
 						}
 						elseif( $res['student_no']==$student_no ) {						// 自己开的设备，自己关掉
 							$now = time();
-							$data = array( 'ins'=>'CLOSE', 'ins_recv_t'=>$now );
-							$query = $this->db->update( 'devices_ctrl', $data, "dev_id='".$res['dev_id']."' AND student_no='$student_no'" );
-							// 如数据库写入成功，则开始计费
+							if( $res['ins']=='OPEN' ) {
+								$data = array( 'ins'=>'CLOSE', 'ins_recv_t'=>$now );
+								$query = $this->db->update( 'devices_ctrl', $data, "dev_id='".$res['dev_id']."' AND student_no='$student_no'" );
+								// 如数据库写入成功，则开始计费
+							}
+							else {
+								$sum_t = round( ($res['ins_recv_t']-$res['break_t']-$res['open_t'])/60, 2 );
+								$fee = $this->count_shower_fee( $res['ins_recv_t']-$res['break_t']-$res['open_t'] ) / 100;
+								$msg = '设备关闭中，账单稍后生成。此次约耗时'.$sum_t.' 分,花费'.$fee.'元';
+								$resp_code = 1;
+							}
 						}
 						else {
 							$msg = '设备正被别人占用';
@@ -506,8 +552,8 @@
 							$price = '4元/50分钟';
 						}
 						else {
-							$display_fee_time = round( ($now-$res['open_t']-$res['break_t'] )/60, 2 );
-							$total_fee = round( $display_fee_time * $res['price']/100, 2 );
+							$display_fee_time = round( ($now-$res['open_t']-$res['break_t'])/60, 2 );
+							$total_fee = $this->count_shower_fee( $now-$res['open_t']-$res['break_t'] ) / 100;
 						}
 					}
 					
@@ -533,6 +579,24 @@
 						"data"      : {}
 					 }';
 			}
+		}
+		
+		// $t - 使用时间，单位：秒
+		// 返回费用值，单位：分
+		public function count_shower_fee( $t ) {
+		
+			$fee = 0;
+			
+			if( $t>=600 ) {				// 大于10分钟
+				$rest = $t - 600;
+				$fee = 300;				// 10分钟共3元
+				// 超出10分钟的，够5分钟收1元	
+				$fee += floor( $rest/300 ) * 100;
+			}
+			else {						// 小于10分钟
+				$fee = floor( $t/30 ) * 15;
+			}	
+			return $fee;
 		}
 		
 		// $device_id - 设备位置信息，不是设备硬件id
@@ -565,11 +629,12 @@
 			$response = $this->signInAndGetUser( $student_no, $student_password );
 			$result['resp_desc'] = $response['resp_desc'];
 			$result['resp_code'] = $response['resp_code'];
-		
+/*		
 			if( $student_no=='201520152015' ) {
 				$log = new logger();
 				$log->write( json_encode($response), 'login' );
 			}	
+*/
 			//$log = new logger();
 			//$log->write( json_encode($response), 'login' );
 	
@@ -657,8 +722,8 @@
 		}
 
 		public function get_card_transaction( $student_no, $token, $page_index=1, $page_size=10, $begin_date=0, $end_date=0 ) {
-			$log = new logger();
-			$log->write('into get_card_transaction', 'test');
+			//$log = new logger();
+			//$log->write('into get_card_transaction', 'test');
 
 			
 			$row = $this->db->get_one( "select card_token from user_info where studentNo = ".$student_no." limit 1" );
@@ -683,8 +748,8 @@
 		}
 
 		public function get_subsidy_list( $student_no, $token, $page_index, $page_size, $begin_date, $end_date ) {
-			$log = new logger();
-			$log->write('into get_subsidy_list', 'test');
+			//$log = new logger();
+			//$log->write('into get_subsidy_list', 'test');
 			
 			$row = $this->db->get_one( "select card_token from user_info where studentNo = ".$student_no." limit 1" );
 			$token = $row['card_token'];
@@ -822,12 +887,12 @@
 			$school_id = $this->school_id;
 			$post_data = json_encode( array('body'=>array('studentNo'=>$student_no,'token'=>$token,'pageIndex'=>$page_index,'pageSzie'=>$page_size,'beginDate'=>$begin_date,'endDate'=>$end_date,'schoolId'=>$school_id)) );
 			$data = $this->http_post_json('getCardTransaction',$post_data);
-			$log = new logger();
+			//$log = new logger();
 			
 			
 			if( is_array($data['data']) ) {
 				$list = $data['data']['list'];
-				$log->write($list, 'api test');
+				//$log->write($list, 'api test');
 				
 				$newlist = null;
 				foreach($list as $k=>$v) {
@@ -854,7 +919,7 @@
 			}
 			
 			
-			$log->write(json_encode($output), 'api');
+			//$log->write(json_encode($output), 'api');
 			
 			return $output;
 		}
@@ -864,7 +929,7 @@
 			* @param student_no 
 		*/
 		public function getSubsidyList( $student_no, $token, $page_index, $page_size, $begin_date, $end_date ) {
-			$log = new Logger();
+			//$log = new Logger();
 			$school_id = $this->school_id;
 			
 			$sql = "select card_token from user_info where studentNo = ".$student_no." limit 1";
@@ -879,7 +944,7 @@
 
 			if( is_array($data['data']) ) {
 				$list = $data['data']['list'];
-				$log->write($list, 'api test');
+				//$log->write($list, 'api test');
 			
 				$newlist = null;
 				foreach($list as $k=>$v) {
@@ -906,7 +971,7 @@
 			}
 				
 				
-			$log->write(json_encode($output), 'api');
+			//$log->write(json_encode($output), 'api');
 
 			return $output;
 		}

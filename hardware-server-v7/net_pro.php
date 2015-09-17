@@ -185,7 +185,7 @@
 		global $config;
 		
 		$db = new db( $config );
-		$data = array( 'dev_type'=>$info['dev_type'],'price'=>$info['price'], 'student_no'=>$info['student_no'], 'dev_id'=>$info['dev_id'], 'open_t'=>$info['open_t'], 'trade_no'=>date("YmdHis").rand(1000,9999) );
+		$data = array( 'dev_type'=>$info['dev_type'],'price'=>$info['price'], 'student_no'=>$info['student_no'], 'dev_id'=>$info['dev_id'], 'open_t'=>$info['open_t'], 'trade_no'=>$info['student_no'].date("YmdHis").rand(1000,9999) );
 		$data['break_t'] = $info['break_t'];
 		$data['fee_type'] = $type;
 		
@@ -215,17 +215,9 @@
 		if( $data['sum_t']>$info['pre_close_t'] )
 			$data['sum_t'] = $info['pre_close_t'];
 					
-		$data['fee'] = round( $data['price']*$data['sum_t']/60 );					// 单位：分（金额）
-		
-		if( $info['dev_type']=='washer' ) {									// 工作时常大于40分钟，就计费
-			if( $data['sum_t']>2400 )
-				$data['fee'] = 400;	
-			else														// 洗衣机，统一收取4元/50分钟
-				$data['fee'] = round( $data['sum_t']/3000*400 );
-		}
-			
-		if( $data['fee']>0 )	
-			$db->insert( 'fee_record', $data );
+		// 此函数不计算费用，仅记录设备使用时间
+		// 数据库中，fee 默认为0
+		$db->insert( 'fee_record', $data );
 
 		$db->close();
 		
